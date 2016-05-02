@@ -1096,6 +1096,15 @@ Widget ImageTest {
     update 1000
     visible 1
     inverted 0
+    scale 100
+}
+
+Widget TTF-TEXT {
+        class 'Truetype'
+        expression '1234567890abcdefghijklmnopqrstuvwxyz'
+        font 'elefont.ttf'
+        fcolor '1d718a'
+        size 40
 }
 
 Widget KVV {
