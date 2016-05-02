@@ -435,7 +435,7 @@ int timer_process(struct timespec *delay)
     /* a negative delay has occurred (positive clock skew or some
        timers are faster than the time needed for processing their
        callbacks) */
-    if (diff.tv_sec < 0) {
+    if (diff.tv_sec < 0 || diff.tv_usec < 0) {
 	/* zero "diff" so the next update is triggered immediately */
 	timerclear(&diff);
     } else {
