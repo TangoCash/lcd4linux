@@ -77,7 +77,7 @@ static void usage(void)
     printf(" lcd4linux [-h]\n");
     printf(" lcd4linux [-l]\n");
     printf(" lcd4linux [-c key=value] [-i] [-f config-file] [-v] [-p pid-file]\n");
-    printf(" lcd4linux [-c key=value] [-F] [-f config-file] [-o output-file] [-q] [-v]\n");
+    printf(" lcd4linux [-c key=value] [-F] [-f config-file] [-o output-file] [-s] [-v]\n");
     printf("\n");
     printf("options:\n");
     printf("  -h               help\n");
@@ -91,7 +91,7 @@ static void usage(void)
     printf("  -p <pid-file>    specify a different pid-file location (default is /var/run/lcd4linux.pid)\n");
     printf("  -F               do not fork and detach (run in foreground)\n");
     printf("  -o <output-file> write picture to file (raster driver only)\n");
-    printf("  -q               suppress startup and exit splash screen\n");
+    printf("  -s               show startup and exit splash screen\n");
 #ifdef WITH_X11
     printf("special X11 options:\n");
     printf("  -display <X11 display name>  preceeds X connection given in $DISPLAY\n");
@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
     char *display, *driver, *layout;
     char section[32];
     int c;
-    int quiet = 0;
+    int quiet = 1;
     int interactive = 0;
     int list_mode = 0;
     int pid;
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
 	printf("recognized special X11 parameters\n");
     }
 #endif
-    while ((c = getopt(argc, argv, "c:Ff:hilo:qvp:")) != EOF) {
+    while ((c = getopt(argc, argv, "c:Ff:hilo:svp:")) != EOF) {
 
 	switch (c) {
 	case 'c':
@@ -265,8 +265,8 @@ int main(int argc, char *argv[])
 	case 'o':
 	    output = optarg;
 	    break;
-	case 'q':
-	    quiet++;
+	case 's':
+	    quiet = 0;
 	    break;
 	case 'v':
 	    verbose_level++;
