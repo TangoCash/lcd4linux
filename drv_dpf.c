@@ -391,6 +391,8 @@ int drv_dpf_init(const char *section, const int quiet)
     if ((ret = drv_generic_graphic_init(section, Name)) != 0)
 	return ret;
 
+    drv_generic_graphic_clear();
+
     if (!quiet) {
 	char buffer[40];
 	qprintf(buffer, sizeof(buffer), "%s %dx%d", Name, DCOLS, DROWS);
