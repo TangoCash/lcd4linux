@@ -69,6 +69,7 @@
 #include "widget_icon.h"
 #include "widget_bar.h"
 #include "widget_image.h"
+#include "widget_ttf.h"
 #include "rgb.h"
 #include "drv.h"
 #include "drv_generic.h"
@@ -670,6 +671,9 @@ int drv_generic_graphic_init(const char *section, const char *driver)
     /* register image widget */
 #ifdef WITH_IMAGE
     wc = Widget_Image;
+    wc.draw = drv_generic_graphic_image_draw;
+    widget_register(&wc);
+    wc = Widget_Truetype;
     wc.draw = drv_generic_graphic_image_draw;
     widget_register(&wc);
 #endif
