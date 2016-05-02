@@ -28,7 +28,8 @@
 #include "widget.h"
 #include "rgb.h"
 
-typedef struct WIDGET_TTF {
+typedef struct WIDGET_TTF
+{
     void *gdImage;		/* raw gd image */
     RGBA *bitmap;		/* image bitmap */
     int width, height;		/* size of the image */
