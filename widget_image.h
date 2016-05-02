@@ -37,6 +37,7 @@ typedef struct WIDGET_IMAGE {
     RGBA *bitmap;		/* image bitmap */
     int width, height;		/* size of the image */
     PROPERTY file;		/* image filename */
+	PROPERTY scale;		/* scale image in percent */
     PROPERTY update;		/* update interval */
     PROPERTY reload;		/* reload image on update? */
     PROPERTY visible;		/* image visible? */

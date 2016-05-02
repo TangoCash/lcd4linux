@@ -74,6 +74,7 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
     int x, y;
     int inverted;
     gdImagePtr gdImage;
+	int scale;
 
     /* clear bitmap */
     if (Image->bitmap) {
@@ -117,6 +118,23 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 	}
 
     }
+
+	scale = P2N(&Image->scale);
+	/* Scale if needed */
+	if ((scale != 100) && scale > 1) {
+		gdImage = Image->gdImage;
+		gdImagePtr scaled_image;
+		int ox = gdImageSX(gdImage);
+		int oy = gdImageSY(gdImage);
+		int nx = ox*scale/100;
+		int ny = oy*scale/100;
+		scaled_image = gdImageCreateTrueColor(nx,ny);
+		gdImageSaveAlpha(scaled_image, 1);
+		gdImageFill(scaled_image, 0, 0, gdImageColorAllocateAlpha(scaled_image, 0, 0, 0, 127));
+		gdImageCopyResized(scaled_image,Image->gdImage,0,0,0,0,nx,ny,ox,oy);
+		gdImageDestroy(Image->gdImage);
+		Image->gdImage = scaled_image;	
+	}
 
     /* maybe resize bitmap */
     gdImage = Image->gdImage;
@@ -179,6 +197,7 @@ static void widget_image_update(void *Self)
 
 	/* evaluate properties */
 	property_eval(&Image->file);
+	property_eval(&Image->scale);
 	property_eval(&Image->update);
 	property_eval(&Image->reload);
 	property_eval(&Image->visible);
@@ -225,6 +244,7 @@ int widget_image_init(WIDGET * Self)
 
 	/* load properties */
 	property_load(section, "file", NULL, &Image->file);
+	property_load(section, "scale", "100", &Image->scale);
 	property_load(section, "update", "100", &Image->update);
 	property_load(section, "reload", "0", &Image->reload);
 	property_load(section, "visible", "1", &Image->visible);
@@ -267,6 +287,7 @@ int widget_image_quit(WIDGET * Self)
 		}
 		free(Image->bitmap);
 		property_free(&Image->file);
+		property_free(&Image->scale);
 		property_free(&Image->update);
 		property_free(&Image->reload);
 		property_free(&Image->visible);
