@@ -39,6 +39,8 @@ typedef struct WIDGET_IMAGE {
 	int oldheight;		/* height of the image before */
     PROPERTY file;		/* image filename */
 	PROPERTY scale;		/* scale image in percent */
+	PROPERTY _width;		/* scale image to witdh */
+	PROPERTY _height;		/* scale image to height */
     PROPERTY update;		/* update interval */
     PROPERTY reload;		/* reload image on update? */
     PROPERTY visible;		/* image visible? */
