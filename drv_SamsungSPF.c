@@ -129,14 +129,14 @@ static struct SPFdev spfDevices[] = {
      .yRes = 600,
      },
     {
-     .type = "SPF-87H-old",
+     .type = "SPF-87H",
      .vendorID = 0x04e8,
      .productID = {0x2025, 0x2026},
      .xRes = 800,
      .yRes = 480,
      },
     {
-     .type = "SPF-87H",
+     .type = "SPF-87H-v2",
      .vendorID = 0x04e8,
      .productID = {0x2033, 0x2034},
      .xRes = 800,
@@ -157,7 +157,7 @@ static struct SPFdev spfDevices[] = {
      .yRes = 600,
      },
     {
-     .type = "SPF-107H-new",
+     .type = "SPF-107H-v2",
      .vendorID = 0x04e8,
      .productID = {0x2035, 0x2036},
      .xRes = 1024,
