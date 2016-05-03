@@ -364,6 +364,14 @@ static int drv_SamsungSPF_send(char *data, unsigned int len)
 	return -1;
     }
 
+	/* Keep SPF87h and friends in MiniMonitorMode */
+	char bytes[]={0x09,0x04};
+
+	if ((ret = usb_control_msg(myDevHandle, 0xc0, 0x01, 0x0000, 0x0000, bytes, 0x02, 1000)) < 0) {
+		error("%s: Error occurred while sending control_msg to device.", Name);
+		error("%s: usb_control_msg returned: %d", Name, ret);
+	};
+
     return 0;
 }
 
