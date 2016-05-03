@@ -290,6 +290,7 @@ static void drv_generic_graphic_render(const int layer, const int row, const int
 /* say hello to the user */
 int drv_generic_graphic_greet(const char *msg1, const char *msg2)
 {
+#if 0
     char *line1[] = { "* LCD4Linux " VERSION " *",
 	"LCD4Linux " VERSION,
 	"* LCD4Linux *",
@@ -302,6 +303,10 @@ int drv_generic_graphic_greet(const char *msg1, const char *msg2)
 	"lcd4linux.bulix.org",
 	NULL
     };
+#endif
+
+    char *line1[] = { NULL };
+    char *line2[] = { NULL };
 
     int i;
     int flag = 0;
