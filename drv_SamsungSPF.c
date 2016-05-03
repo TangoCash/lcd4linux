@@ -52,6 +52,7 @@
 
 /* graphic display? */
 #include "drv_generic_graphic.h"
+#include "jpeg_mem_dest.h"
 
 // Drivername for verbose output
 static char Name[] = "SamsungSPF";
