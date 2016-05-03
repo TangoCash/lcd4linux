@@ -78,6 +78,7 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 
     /* clear bitmap */
     if (Image->bitmap) {
+	Image->oldheight = Image->height;
 	int i;
 	for (i = 0; i < Image->height * Image->width; i++) {
 	    RGBA empty = {.R = 0x00,.G = 0x00,.B = 0x00,.A = 0x00 };
@@ -138,12 +139,12 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 
     /* maybe resize bitmap */
     gdImage = Image->gdImage;
-    if (gdImage->sx > Image->width) {
+    if (gdImage->sx > Image->width || P2N(&Image->center)) {
 	Image->width = gdImage->sx;
 	free(Image->bitmap);
 	Image->bitmap = NULL;
     }
-    if (gdImage->sy > Image->height) {
+    if (gdImage->sy > Image->height || P2N(&Image->center)) {
 	Image->height = gdImage->sy;
 	free(Image->bitmap);
 	Image->bitmap = NULL;
@@ -202,6 +203,7 @@ static void widget_image_update(void *Self)
 	property_eval(&Image->reload);
 	property_eval(&Image->visible);
 	property_eval(&Image->inverted);
+	property_eval(&Image->center);
 
 	/* render image into bitmap */
 	widget_image_render(W->name, Image);
@@ -249,6 +251,7 @@ int widget_image_init(WIDGET * Self)
 	property_load(section, "reload", "0", &Image->reload);
 	property_load(section, "visible", "1", &Image->visible);
 	property_load(section, "inverted", "0", &Image->inverted);
+	property_load(section, "center", "0", &Image->center);
 
 	/* sanity checks */
 	if (!property_valid(&Image->file)) {
@@ -292,6 +295,7 @@ int widget_image_quit(WIDGET * Self)
 		property_free(&Image->reload);
 		property_free(&Image->visible);
 		property_free(&Image->inverted);
+		property_free(&Image->center);
 		free(Self->data);
 		Self->data = NULL;
 	    }

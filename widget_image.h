@@ -36,12 +36,14 @@ typedef struct WIDGET_IMAGE {
     void *gdImage;		/* raw gd image */
     RGBA *bitmap;		/* image bitmap */
     int width, height;		/* size of the image */
+	int oldheight;		/* height of the image before */
     PROPERTY file;		/* image filename */
 	PROPERTY scale;		/* scale image in percent */
     PROPERTY update;		/* update interval */
     PROPERTY reload;		/* reload image on update? */
     PROPERTY visible;		/* image visible? */
     PROPERTY inverted;		/* image inverted? */
+    PROPERTY center;		/* image centered? */
 } WIDGET_IMAGE;
 
 extern WIDGET_CLASS Widget_Image;

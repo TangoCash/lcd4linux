@@ -33,6 +33,7 @@ typedef struct WIDGET_TTF
     void *gdImage;		/* raw gd image */
     RGBA *bitmap;		/* image bitmap */
     int width, height;		/* size of the image */
+	int oldheight;		/* height of the image before */
     PROPERTY value;		/* text to render */
     PROPERTY size;		/* fontsize */
     PROPERTY font;		/* path to font */
@@ -41,6 +42,7 @@ typedef struct WIDGET_TTF
     PROPERTY reload;		/* reload image on update? */
     PROPERTY visible;		/* image visible? */
     PROPERTY inverted;		/* image inverted? */
+    PROPERTY center;		/* image centered? */
 } WIDGET_TTF;
 
 extern WIDGET_CLASS Widget_Truetype;

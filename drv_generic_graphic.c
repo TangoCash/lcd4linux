@@ -571,8 +571,31 @@ int drv_generic_graphic_image_draw(WIDGET * W)
 	return 0;
     }
 
-    /* maybe grow layout framebuffer */
-    drv_generic_graphic_resizeFB(row + height, col + width);
+	int center = P2N(&Image->center);
+	if (center) {
+		int aHight = Image->height;
+		if (Image->oldheight > Image->height) aHight = Image->oldheight;
+		// set layout framebuffer to a fixed size
+		drv_generic_graphic_resizeFB(row + aHight, LCOLS);
+		// flush area
+		drv_generic_graphic_blit(row, 0, aHight, LCOLS);
+		// fill it black or transparent
+		for (y = 0; y < aHight; y++) {
+			for (x = 0; x < LCOLS; x++) {
+				int i = (row + y ) * LCOLS + LCOLS + x;
+				drv_generic_graphic_FB[layer][i] = (Driver == "SamsungSPF") ? BG_COL : NO_COL;
+			}
+		}
+		// align logo in the area
+		if (width < LCOLS)
+			col = (LCOLS / 2) - (width / 2);
+		else
+			col = 1;
+		row += (aHight - height) / 2;
+	} else {
+		/* maybe grow layout framebuffer */
+		drv_generic_graphic_resizeFB(row + height, col + width);
+	}
 
     /* render image */
     visible = P2N(&Image->visible);
