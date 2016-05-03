@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 /* these should always be included */
 #include "debug.h"
@@ -86,6 +87,24 @@ static void my_readline(RESULT * result, RESULT * arg1, RESULT * arg2)
     SetResult(&result, R_STRING, &value);
 }
 
+/* function 'exist' */
+/* takes one argument, file name */
+/* returns 1 if found, 0 if not */
+
+static void my_exist(RESULT * result, RESULT * arg1)
+{
+	char *value;
+	value = strdup("0");
+
+	/* int access() return 0 if permitted, -1 otherwise */
+	if ( access(R2S(arg1), F_OK) == 0 ) {
+		value = strdup("1");
+	}
+
+	/* store result */
+	SetResult(&result, R_STRING, value);
+}
+
 /* plugin initialization */
 /* MUST NOT be declared 'static'! */
 int plugin_init_file(void)
@@ -95,6 +114,7 @@ int plugin_init_file(void)
     /* the second parameter is the number of arguments */
     /* -1 stands for variable argument list */
     AddFunction("file::readline", 2, my_readline);
+    AddFunction("file::exist", 1, my_exist);
 
     return 0;
 }
