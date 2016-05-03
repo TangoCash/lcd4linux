@@ -144,13 +144,13 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 
     /* maybe resize bitmap */
     gdImage = Image->gdImage;
-    if (gdImage->sx > Image->width || P2N(&Image->center)) {
+    if (gdImage->sx > Image->width || P2N(&Image->center))
     {
         Image->width = gdImage->sx;
         free(Image->bitmap);
         Image->bitmap = NULL;
     }
-    if (gdImage->sy > Image->height || P2N(&Image->center)) {
+    if (gdImage->sy > Image->height || P2N(&Image->center))
     {
         Image->height = gdImage->sy;
         free(Image->bitmap);
