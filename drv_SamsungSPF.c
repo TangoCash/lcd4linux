@@ -73,6 +73,13 @@ struct SPFdev {
 
 static struct SPFdev spfDevices[] = {
     {
+     .type = "SPF-AUTO",
+     .vendorID = 0x04e8,
+     .productID = {0xffff, 0xffff},
+     .xRes = 1,
+     .yRes = 1,
+     },
+    {
      .type = "SPF-72H",
      .vendorID = 0x04e8,
      .productID = {0x200a, 0x200b},
@@ -253,6 +260,7 @@ static void drv_SamsungSPF_find()
     /* open USB device */
     struct usb_bus *bus;
     struct usb_device *dev;
+	int i;
 
     usb_init();
     usb_find_busses();
@@ -261,20 +269,41 @@ static void drv_SamsungSPF_find()
     for (bus = usb_busses; bus; bus = bus->next) {
 	for (dev = bus->devices; dev; dev = dev->next) {
 	    if (dev->descriptor.idVendor == myFrame->vendorID) {
-		if (dev->descriptor.idProduct == myFrame->productID.storageMode) {
+			if (myFrame->productID.storageMode == 0xFFFF) {
+				for (i = 0; i < numFrames; i++) {
+				if (dev->descriptor.idProduct == spfDevices[i].productID.storageMode) {
 
-		    info("Samsung photoframe in Mass Storage mode found.");
-		    myDev = dev;
+		    		info("Samsung photoframe in Mass Storage mode found.");
+					myFrame = &spfDevices[i];
+	    			info("%s: Autodetect model %s.", Name, spfDevices[i].type);
+		    		myDev = dev;
 
-		    return;
-		} else if (dev->descriptor.idProduct == myFrame->productID.monitorMode) {
+			    	return;
+				} else if (dev->descriptor.idProduct == spfDevices[i].productID.monitorMode) {
 
-		    info("Samsung photoframe in Custom Product mode found.");
-		    myDev = dev;
+		    		info("Samsung photoframe in Custom Product mode found.");
+					myFrame = &spfDevices[i];
+	    			info("%s: Autodetect model %s.", Name, spfDevices[i].type);
+		    		myDev = dev;
 
-		    return;
+		    		return;
+				}}
+			} else {
+				if (dev->descriptor.idProduct == myFrame->productID.storageMode) {
+
+		    		info("Samsung photoframe in Mass Storage mode found.");
+		    		myDev = dev;
+
+		    	return;
+				} else if (dev->descriptor.idProduct == myFrame->productID.monitorMode) {
+
+		    		info("Samsung photoframe in Custom Product mode found.");
+		    		myDev = dev;
+
+		    		return;
+				}
+	    	}
 		}
-	    }
 	}
     }
 
@@ -569,6 +598,10 @@ int drv_SamsungSPF_init(const char *section, const int quiet)
 
     /* try to open USB device */
     drv_SamsungSPF_find();
+	while (!myDev) { //endless loop waitung for SPF
+		sleep(5);
+    	drv_SamsungSPF_find();
+	}
     if (!myDev) {
 	error("%s: No Samsung '%s' found!", Name, myFrame->type);
 	return -1;
