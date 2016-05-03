@@ -37,7 +37,7 @@
 #include <sys/types.h>		/* umask() */
 #include <sys/stat.h>		/* umask() */
 
-#include "svn_version.h"
+#include "vcs_version.h"
 #include "cfg.h"
 #include "debug.h"
 #include "qprintf.h"
@@ -59,7 +59,7 @@
 
 #define PIDFILE "/var/run/lcd4linux.pid"
 
-static char *release = "LCD4Linux " VERSION "-" SVN_VERSION;
+static char *release = "LCD4Linux " VERSION "-" VCS_VERSION;
 static char *copyright =
     "Copyright (C) 2005, 2006, 2007, 2008, 2009 The LCD4Linux Team <lcd4linux-devel@users.sourceforge.net>";
 static char **my_argv;

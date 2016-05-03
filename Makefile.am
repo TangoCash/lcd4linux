@@ -23,7 +23,7 @@ lcd4linux_LDADD   = @DRIVERS@ @PLUGINS@ @DRVLIBS@ @PLUGINLIBS@
 lcd4linux_DEPENDENCIES = @DRIVERS@ @PLUGINS@
 
 lcd4linux_SOURCES =           \
-lcd4linux.c   svn_version.h   \
+lcd4linux.c   vcs_version.h   \
 cfg.c         cfg.h           \
 debug.c       debug.h         \
 drv.c         drv.h           \
@@ -174,7 +174,7 @@ plugin_xmms.c
 
 
 EXTRA_DIST =                  \
-svn_version.sh                \
+vcs_version.sh                \
 lcd4linux.conf.sample         \
 lcd4kde.conf                  \
 lcd4linux.kdelnk              \
@@ -193,10 +193,9 @@ plugin_sample.c
 
 
 
-# create subversion version
+# create version
 
-.PHONY: svn_version
+.PHONY: vcs_version
 
-svn_version:
-	svn_version.sh
-
+vcs_version:
+	./vcs_version.sh
