@@ -54,6 +54,9 @@
 #include "drv_generic_graphic.h"
 #include "jpeg_mem_dest.h"
 
+#define FILLSIZE 16384 // 16kB
+#define HEADERSIZE 12
+
 // Drivername for verbose output
 static char Name[] = "SamsungSPF";
 
@@ -295,7 +298,9 @@ static int drv_SamsungSPF_open()
 
 	myDevHandle = usb_open(myDev);
 
+#if 0
 	setuid(getuid());
+#endif
 
 	strcpy(buf, "** no string **");
 	res = usb_get_string_simple(myDevHandle, myDev->descriptor.iManufacturer, buf, sizeof(buf));
@@ -306,6 +311,7 @@ static int drv_SamsungSPF_open()
 	res = usb_control_msg(myDevHandle, USB_TYPE_STANDARD | USB_ENDPOINT_IN,
 			      USB_REQ_GET_DESCRIPTOR, 0xfe, 0xfe, buf, 0xfe, 1000);
 	/* usb_close( myDev ); */
+	usb_close(myDevHandle);
 	// Sleep some time before research
 	sleep(1);
 	drv_SamsungSPF_find();
@@ -331,18 +337,21 @@ static int drv_SamsungSPF_open()
 /* dummy function that sends something to the display */
 static int drv_SamsungSPF_send(char *data, unsigned int len)
 {
-    char usb_hdr[12] = { 0xa5, 0x5a, 0x18, 0x04, 0xff, 0xff,
+    char usb_hdr[HEADERSIZE] = { 0xa5, 0x5a, 0x18, 0x04, 0xff, 0xff,
 	0xff, 0xff, 0x48, 0x00, 0x00, 0x00
     };
+#if 0
     char buffer[1] = { 0x0 };
+#endif
     int usb_timeout = 1000;
     int usb_endpoint = 0x2;
     int ret;
 
     *(int *) (usb_hdr + 4) = len;
 
-    debug("bytes_to_send: %d, offset: %d", len, 12);
+    debug("bytes_to_send: %d, offset: %d", len, HEADERSIZE);
 
+#if 0
     /* Send USB header */
     if ((ret = usb_bulk_write(myDevHandle, usb_endpoint, usb_hdr, 12, usb_timeout)) < 0) {
 	error("%s: Error occurred while writing data to device.", Name);
@@ -363,6 +372,33 @@ static int drv_SamsungSPF_send(char *data, unsigned int len)
 	error("%s: usb_bulk_write returned: %d", Name, ret);
 	return -1;
     }
+#endif
+
+	char *buffer;
+	unsigned int rest = FILLSIZE - ((len + HEADERSIZE) % FILLSIZE); /* +1; */
+	unsigned int full = HEADERSIZE + len + rest;
+
+	debug("calculated full bytes_to_send:: %d", full);
+
+	buffer = malloc(full + FILLSIZE); //added FILLSIZE is just for safety
+	if (buffer != NULL) {
+		int i;
+		for (i = 0; i < HEADERSIZE; i++)
+			buffer[i] = usb_hdr[i];
+		memset(buffer + HEADERSIZE + len, 0x00, rest);
+		memcpy(buffer + HEADERSIZE, data, len);
+		if ((ret = usb_bulk_write(myDevHandle, usb_endpoint, buffer, full, usb_timeout)) < 0) {
+			error("%s: Error occurred while writing data to device.", Name);
+			error("%s: usb_bulk_write returned: %d", Name, ret);
+			free(buffer);
+			return -1;
+		} else {
+			free(buffer);
+		}
+	} else {
+		error("%s: Not enough free memory.", Name);
+		return -1;
+	}
 
 	/* Keep SPF87h and friends in MiniMonitorMode */
 	char bytes[]={0x09,0x04};
