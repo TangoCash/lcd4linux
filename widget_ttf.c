@@ -75,7 +75,6 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 	int trans;
 	int brect[8];
 	int _width,_height;
-	int asize = 0;
 	char *e;
 	unsigned long l;
 	unsigned char r,g,b;
@@ -128,12 +127,17 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 			while (((brect[2]-brect[6] + 6) > _width) || ((brect[3]-brect[7] + 6) > _height));
 			x = _width;
 			y = _height;
-			asize = 1;
 		} else {
 			err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
 
-			x = brect[2]-brect[6] + 6;
-			y = brect[3]-brect[7] + 6;
+			if ((_width > 0) && (_height > 0))
+			{
+				x = _width;
+				y = _height;
+			} else {
+				x = brect[2]-brect[6] + 6;
+				y = brect[3]-brect[7] + 6;
+			}
 		}
 		Image->gdImage = gdImageCreateTrueColor(x,y);
 		gdImageSaveAlpha(Image->gdImage, 1);
@@ -155,7 +159,7 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 
 		color = gdImageColorAllocate(Image->gdImage, r, g, b);
 
-		if (((_width > 0) && (_height > 0)) && asize)
+		if ((_width > 0) && (_height > 0))
 			switch (toupper(align[0]))
 			{
 				case 'R':
