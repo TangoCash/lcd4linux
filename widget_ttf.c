@@ -74,14 +74,15 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 	int color;
 	int trans;
 	int brect[8];
+	int _width,_height;
+	int asize = 0;
 	char *e;
 	unsigned long l;
 	unsigned char r,g,b;
 	char *fcolor;
 	char *text;
 	double size;
-	char *font;
-	char *err;
+	char *font,*err,*align;
 
 
 	/* clear bitmap */
@@ -111,11 +112,29 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 		text = P2S(&Image->value);
 		font = P2S(&Image->font);
 		size = P2N(&Image->size);
+		_width = P2N(&Image->_width);
+		_height = P2N(&Image->_height);
+		align = P2S(&Image->align);
 
-		err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
+		if (((_width > 0) && (_height > 0)) && (size == 0))
+		{
+			size = _height;
+			err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
+			do
+			{
+				size--;
+				err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
+			}
+			while (((brect[2]-brect[6] + 6) > _width) || ((brect[3]-brect[7] + 6) > _height));
+			x = _width;
+			y = _height;
+			asize = 1;
+		} else {
+			err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
 
-		x = brect[2]-brect[6] + 6;
-		y = brect[3]-brect[7] + 6;
+			x = brect[2]-brect[6] + 6;
+			y = brect[3]-brect[7] + 6;
+		}
 		Image->gdImage = gdImageCreateTrueColor(x,y);
 		gdImageSaveAlpha(Image->gdImage, 1);
 
@@ -136,7 +155,24 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 
 		color = gdImageColorAllocate(Image->gdImage, r, g, b);
 
-		x = 3 - brect[6];
+		if (((_width > 0) && (_height > 0)) && asize)
+			switch (toupper(align[0]))
+			{
+				case 'R':
+				x = _width - brect[2] - brect[6] - 3;
+				break;
+				case 'L':
+				x = 3 - brect[6];
+				break;
+				case 'C':
+				x = (_width - brect[2]-brect[6])/2 - brect[6];
+				break;
+				default:
+				x = (_width - brect[2]-brect[6])/2 - brect[6];
+				break;
+			}
+		else
+			x = 3 - brect[6];
 		y = 3 - brect[7];
 		err = gdImageStringFT(Image->gdImage,&brect[0],color,font,size,0.0,x,y,text);
 
@@ -221,6 +257,9 @@ static void widget_ttf_update(void *Self)
 		property_eval(&Image->visible);
 		property_eval(&Image->inverted);
 		property_eval(&Image->center);
+		property_eval(&Image->_width);
+		property_eval(&Image->_height);
+		property_eval(&Image->align);
 
 		/* render image into bitmap */
 		widget_ttf_render(W->name, Image);
@@ -273,6 +312,9 @@ int widget_ttf_init(WIDGET * Self)
 		property_load(section, "visible", "1", &Image->visible);
 		property_load(section, "inverted", "0", &Image->inverted);
 		property_load(section, "center", "0", &Image->center);
+		property_load(section, "width", "0", &Image->_width);
+		property_load(section, "height", "0", &Image->_height);
+		property_load(section, "align", "C", &Image->align);
 
 		/* sanity checks */
 		if (!property_valid(&Image->font))
@@ -326,6 +368,10 @@ int widget_ttf_quit(WIDGET * Self)
 				property_free(&Image->visible);
 				property_free(&Image->inverted);
 				property_free(&Image->center);
+				property_eval(&Image->_width);
+				property_eval(&Image->_height);
+				property_eval(&Image->align);
+
 				free(Self->data);
 				Self->data = NULL;
 			}

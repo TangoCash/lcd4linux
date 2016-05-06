@@ -43,6 +43,9 @@ typedef struct WIDGET_TTF
 	PROPERTY visible;		/* image visible? */
 	PROPERTY inverted;		/* image inverted? */
 	PROPERTY center;		/* image centered? */
+	PROPERTY _width;		/* scale font to witdh */
+	PROPERTY _height;		/* scale font to height */
+	PROPERTY align;		/* align font to L/C/R */
 } WIDGET_TTF;
 
 extern WIDGET_CLASS Widget_Truetype;
