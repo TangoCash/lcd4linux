@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
 	printf("recognized special X11 parameters\n");
     }
 #endif
-    while ((c = getopt(argc, argv, "c:Ff:hilo:svp:")) != EOF) {
+    while ((c = getopt(argc, argv, "c:Ff:hilo:sqvp:")) != EOF) {
 
 	switch (c) {
 	case 'c':
@@ -267,6 +267,9 @@ int main(int argc, char *argv[])
 	    break;
 	case 's':
 	    quiet = 0;
+	    break;
+	case 'q':
+	    fprintf(stderr, "-q is obsolete\n");
 	    break;
 	case 'v':
 	    verbose_level++;
