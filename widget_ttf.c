@@ -77,7 +77,7 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 	int _width,_height;
 	char *e;
 	unsigned long l;
-	unsigned char r,g,b;
+	unsigned char r,g,b,a;
 	char *fcolor;
 	char *text;
 	double size;
@@ -127,14 +127,18 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 			while (((brect[2]-brect[6] + 6) > _width) || ((brect[3]-brect[7] + 6) > _height));
 			x = _width;
 			y = _height;
-		} else {
+		}
+		else
+		{
 			err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
 
 			if ((_width > 0) && (_height > 0))
 			{
 				x = _width;
 				y = _height;
-			} else {
+			}
+			else
+			{
 				x = brect[2]-brect[6] + 6;
 				y = brect[3]-brect[7] + 6;
 			}
@@ -152,26 +156,39 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 
 		fcolor = P2S(&Image->fcolor);
 
-		l = strtoul(fcolor, &e, 16);
-		r = (l >> 16) & 0xff;
-		g = (l >> 8) & 0xff;
-		b = l & 0xff;
+		if (strlen(fcolor) == 8)
+		{
+			l = strtoul(fcolor, &e, 16);
+			r = (l >> 24) & 0xff;
+			g = (l >> 16) & 0xff;
+			b = (l >> 8) & 0xff;
+			a = (l & 0xff) /2;
 
-		color = gdImageColorAllocate(Image->gdImage, r, g, b);
+			color = gdImageColorAllocateAlpha(Image->gdImage, r, g, b, a);
+		}
+		else
+		{
+			l = strtoul(fcolor, &e, 16);
+			r = (l >> 16) & 0xff;
+			g = (l >> 8) & 0xff;
+			b = l & 0xff;
+
+			color = gdImageColorAllocate(Image->gdImage, r, g, b);
+		}
 
 		if ((_width > 0) && (_height > 0))
 			switch (toupper(align[0]))
 			{
-				case 'R':
+			case 'R':
 				x = _width - brect[2] - brect[6] - 3;
 				break;
-				case 'L':
+			case 'L':
 				x = 3 - brect[6];
 				break;
-				case 'C':
+			case 'C':
 				x = (_width - brect[2]-brect[6])/2 - brect[6];
 				break;
-				default:
+			default:
 				x = (_width - brect[2]-brect[6])/2 - brect[6];
 				break;
 			}
@@ -308,7 +325,7 @@ int widget_ttf_init(WIDGET * Self)
 
 		/* load properties */
 		property_load(section, "expression", "Samsung", &Image->value);
-		property_load(section, "size", "40", &Image->size);
+		property_load(section, "size", "0", &Image->size);
 		property_load(section, "font", NULL, &Image->font);
 		property_load(section, "fcolor", "ff0000", &Image->fcolor);
 		property_load(section, "update", "100", &Image->update);
