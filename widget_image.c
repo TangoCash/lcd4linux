@@ -194,9 +194,13 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 		int cx = (DCOLS/2) - (ox/2);
 		int cy = (oy < Image->oldheight) ? Image->oldheight : oy;
 		center_image = gdImageCreateTrueColor(DCOLS,cy);
+		if (cy > oy)
+			cy = (cy / 2) - (oy / 2);
+		else
+			cy = 0;
 		gdImageSaveAlpha(center_image, 1);
 		gdImageFill(center_image, 0, 0, gdImageColorAllocateAlpha(center_image, 0, 0, 0, 127));
-		gdImageCopyResized(center_image,Image->gdImage,cx,0,0,0,ox,oy,ox,oy);
+		gdImageCopyResized(center_image,Image->gdImage,cx,cy,0,0,ox,oy,ox,oy);
 		gdImageDestroy(Image->gdImage);
 		Image->gdImage = center_image;
 	}
