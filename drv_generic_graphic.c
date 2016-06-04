@@ -631,34 +631,14 @@ int drv_generic_graphic_image_draw(WIDGET * W)
 	int center = P2N(&Image->center);
 	if (center)
 	{
-		int area_height = (Image->oldheight > Image->height) ? Image->oldheight : Image->height;
-		if (center > area_height)
-			area_height = center;
-		// set layout framebuffer to a fixed size
-		drv_generic_graphic_resizeFB(row + area_height, LCOLS);
-		// flush area
-		drv_generic_graphic_blit(row, 0, area_height, LCOLS);
-		// fill it black or transparent
-		for (y = 0; y < area_height; y++)
-		{
-			for (x = 0; x < LCOLS; x++)
-			{
-				int i = (row + y ) * LCOLS + LCOLS + x;
-				drv_generic_graphic_FB[layer][i] = (Driver == "SamsungSPF") ? BG_COL : NO_COL;
-			}
-		}
-		// align image in the area
 		if (width < LCOLS)
 			col = (LCOLS / 2) - (width / 2);
 		else
 			col = 1;
-		row += (area_height - height) / 2;
 	}
-	else
-	{
-		/* maybe grow layout framebuffer */
-		drv_generic_graphic_resizeFB(row + height, col + width);
-	}
+
+	/* maybe grow layout framebuffer */
+	drv_generic_graphic_resizeFB(row + height, col + width);
 
 	/* render image */
 	visible = P2N(&Image->visible);

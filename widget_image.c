@@ -63,6 +63,7 @@
 #include "widget.h"
 #include "widget_image.h"
 #include "rgb.h"
+#include "drv_generic.h"
 
 #ifdef WITH_DMALLOC
 #include <dmalloc.h>
@@ -74,7 +75,7 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 	int x, y;
 	int inverted;
 	gdImagePtr gdImage;
-	int scale,_width,_height;
+	int scale,_width,_height, center;
 
 	/* clear bitmap */
 	if (Image->bitmap)
@@ -130,6 +131,7 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 	_width = P2N(&Image->_width);
 	_height = P2N(&Image->_height);
 	scale = P2N(&Image->scale);
+	center = P2N(&Image->center);
 
 	if (((_width > 0) || (_height > 0)) && (scale == 100))
 	{
@@ -182,6 +184,23 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 		gdImageDestroy(Image->gdImage);
 		Image->gdImage = scaled_image;
 	}
+
+	if (center)
+	{
+		gdImage = Image->gdImage;
+		gdImagePtr center_image;
+		int ox = gdImageSX(gdImage);
+		int oy = gdImageSY(gdImage);
+		int cx = (DCOLS/2) - (ox/2);
+		int cy = (oy < Image->oldheight) ? Image->oldheight : oy;
+		center_image = gdImageCreateTrueColor(DCOLS,cy);
+		gdImageSaveAlpha(center_image, 1);
+		gdImageFill(center_image, 0, 0, gdImageColorAllocateAlpha(center_image, 0, 0, 0, 127));
+		gdImageCopyResized(center_image,Image->gdImage,cx,0,0,0,ox,oy,ox,oy);
+		gdImageDestroy(Image->gdImage);
+		Image->gdImage = center_image;
+	}
+	
 
 	/* maybe resize bitmap */
 	gdImage = Image->gdImage;
