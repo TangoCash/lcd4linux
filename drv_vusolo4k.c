@@ -156,9 +156,9 @@ static void drv_vusolo4k_set_pixel(int x, int y, RGBA pix)
 
 	location = (x * xres + y) * 4;
 	pix = drv_generic_graphic_rgb(x, y);
-	*(newLCD + location + 0) = pix.R;
+	*(newLCD + location + 0) = pix.B;
 	*(newLCD + location + 1) = pix.G;
-	*(newLCD + location + 2) = pix.B;
+	*(newLCD + location + 2) = pix.R;
 	*(newLCD + location + 3) = 0xff;
 }
 
