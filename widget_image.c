@@ -116,13 +116,48 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 			error("Warning: Image %s: fopen(%s) failed: %s", Name, file, strerror(errno));
 			return;
 		}
-
 		Image->gdImage = gdImageCreateFromPng(fd);
 		fclose(fd);
 
 		if (Image->gdImage == NULL)
 		{
-			error("Warning: Image %s: CreateFromPng(%s) failed!", Name, file);
+			fd = fopen(file, "rb");
+			if (fd == NULL)
+			{
+				error("Warning: Image %s: fopen(%s) failed: %s", Name, file, strerror(errno));
+				return;
+			}
+			Image->gdImage = gdImageCreateFromJpeg(fd);
+			fclose(fd);
+		}
+
+		if (Image->gdImage == NULL)
+		{
+			fd = fopen(file, "rb");
+			if (fd == NULL)
+			{
+				error("Warning: Image %s: fopen(%s) failed: %s", Name, file, strerror(errno));
+				return;
+			}
+			Image->gdImage = gdImageCreateFromGif(fd);
+			fclose(fd);
+		}
+
+		if (Image->gdImage == NULL)
+		{
+			fd = fopen(file, "rb");
+			if (fd == NULL)
+			{
+				error("Warning: Image %s: fopen(%s) failed: %s", Name, file, strerror(errno));
+				return;
+			}
+			Image->gdImage = gdImageCreateFromBmp(fd);
+			fclose(fd);
+		}
+
+		if (Image->gdImage == NULL)
+		{
+			error("Warning: Image %s: CreateFromPng/Jpeg/Gif/Bmp (%s) failed!", Name, file);
 			return;
 		}
 

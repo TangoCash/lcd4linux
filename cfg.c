@@ -498,8 +498,8 @@ static int cfg_check_source(const char *file)
 static int cfg_read(const char *file)
 {
     FILE *stream;
-    char buffer[256];
-    char section[256];
+    char buffer[512];
+    char section[512];
     char *line, *key, *val, *end;
     int section_open, section_close;
     int error, lineno;
@@ -515,7 +515,7 @@ static int cfg_read(const char *file)
 
     error = 0;
     lineno = 0;
-    while ((line = fgets(buffer, 256, stream)) != NULL) {
+    while ((line = fgets(buffer, 512, stream)) != NULL) {
 
 	/* increment line number */
 	lineno++;

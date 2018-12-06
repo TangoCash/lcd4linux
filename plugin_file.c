@@ -55,7 +55,7 @@
 
 static void my_readline(RESULT * result, RESULT * arg1, RESULT * arg2)
 {
-    char value[80], val2[80];
+    char value[256], val2[256];
     FILE *fp;
     int reqline, i, size;
 
@@ -71,7 +71,7 @@ static void my_readline(RESULT * result, RESULT * arg1, RESULT * arg2)
 	    size = strcspn(val2, "\r\n");
 	    strncpy(value, val2, size);
 	    value[size] = '\0';
-	    /* more than 80 chars, chew up rest of line */
+	    /* more than 256 chars, chew up rest of line */
 	    while (!feof(fp) && strchr(val2, '\n') == NULL) {
 		fgets(val2, sizeof(val2), fp);
 	    }
