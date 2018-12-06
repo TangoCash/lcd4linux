@@ -210,7 +210,7 @@ int main(int argc, char *argv[])
     char *cfg = "/etc/lcd4linux.conf";
     char *pidfile = PIDFILE;
     char *display, *driver, *layout;
-    char section[32];
+    char section[64];
     int c;
     int quiet = 1;
     int interactive = 0;
