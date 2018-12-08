@@ -77,7 +77,7 @@ static int lcd_read_value(const char *filename)
 	FILE *_fd = fopen(filename, "r");
 	if (_fd) {
 		int tmp;
-		if (fscanf(fd, "%x", &tmp) == 1)
+		if (fscanf(_fd, "%x", &tmp) == 1)
 			value = tmp;
 		fclose(_fd);
 	}
@@ -86,9 +86,9 @@ static int lcd_read_value(const char *filename)
 
 static int vusolo4k_open(const char *dev)
 {
-	bpp = 32;
-	xres = 480;
-	yres = 320;
+	bpp = lcd_read_value(LCD_BPP);
+	xres = lcd_read_value(LCD_XRES);
+	yres = lcd_read_value(LCD_YRES);
 	fd = open(dev, O_RDWR);
 	if (fd == -1) {
 		printf("cannot open lcd device\n");
