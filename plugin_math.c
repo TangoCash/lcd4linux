@@ -114,6 +114,18 @@ static void my_ceil(RESULT * result, RESULT * arg)
     SetResult(&result, R_NUMBER, &value);
 }
 
+static void my_round(RESULT * result, RESULT * arg)
+{
+    double value;
+    if (R2N(arg) > 0)
+	value = (int)(R2N(arg) + 0.5);
+    else if (R2N(arg) < 0)
+	value = (int)(R2N(arg) - 0.5);
+    else
+	value = 0;
+    SetResult(&result, R_NUMBER, &value);
+}
+
 static void my_decode(RESULT * result, int argc, RESULT * argv[])
 {
     int index;
@@ -157,6 +169,9 @@ int plugin_init_math(void)
     /* floor, ceil */
     AddFunction("floor", 1, my_floor);
     AddFunction("ceil", 1, my_ceil);
+
+    /* round */
+    AddFunction("round", 1, my_round);
 
     /* decode */
     AddFunction("decode", -1, my_decode);
