@@ -123,6 +123,7 @@ drv_USBHUB.c                  \
 drv_USBLCD.c                  \
 drv_vnc.c                     \
 drv_WincorNixdorf.c           \
+drv_vuplus4k.c                \
 drv_X11.c                     \
                               \
 font_6x8.h                    \

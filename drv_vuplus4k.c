@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 redblue
+ * Copyright (C) 2019 redblue
  *
  * This file is part of LCD4Linux.
  *
@@ -20,10 +20,14 @@
  */
 
 /*
+ * working on vusolo4k, vuduo4k
+ */
+
+/*
  *
  * exported fuctions:
  *
- * struct DRIVER drv_vusolo4k
+ * struct DRIVER drv_vuplus4k
  *
  */
 
@@ -65,7 +69,7 @@
 
 typedef enum { false = 0, true = !false } bool;
 
-static char Name[] = "vusolo4k";
+static char Name[] = "vuplus4k";
 
 /* Display data */
 static int fd = -1, bpp = 0, xres = 0, yres = 0, backlight = 0;
@@ -84,7 +88,7 @@ static int lcd_read_value(const char *filename)
 	return value;
 }
 
-static int vusolo4k_open(const char *dev)
+static int vuplus4k_open(const char *dev)
 {
 	bpp = lcd_read_value(LCD_BPP);
 	xres = lcd_read_value(LCD_XRES);
@@ -103,7 +107,7 @@ static int vusolo4k_open(const char *dev)
 	return 0;
 }
 
-static int vusolo4k_close()
+static int vuplus4k_close()
 {
 	if (newLCD)
 	{
@@ -123,7 +127,7 @@ static int vusolo4k_close()
 	return 0;
 }
 
-static int drv_vusolo4k_open(const char *section)
+static int drv_vuplus4k_open(const char *section)
 {
 	char *dev;
 
@@ -134,23 +138,23 @@ static int drv_vusolo4k_open(const char *section)
 		return -1;
 	}
 
-	int h = vusolo4k_open(dev);
+	int h = vuplus4k_open(dev);
 	if (h == -1)
 	{
-		error("%s: cannot open vusolo4k device %s", Name, dev);
+		error("%s: cannot open vuplus4k device %s", Name, dev);
 		return -1;
 	}
 
 	return 0;
 }
 
-static int drv_vusolo4k_close(void)
+static int drv_vuplus4k_close(void)
 {
-	vusolo4k_close();
+	vuplus4k_close();
 	return 0;
 }
 
-static void drv_vusolo4k_set_pixel(int x, int y, RGBA pix)
+static void drv_vuplus4k_set_pixel(int x, int y, RGBA pix)
 {
 	long int location;
 
@@ -162,7 +166,7 @@ static void drv_vusolo4k_set_pixel(int x, int y, RGBA pix)
 	*(newLCD + location + 3) = 0xff;
 }
 
-static void drv_vusolo4k_blit(const int row, const int col, const int height, const int width)
+static void drv_vuplus4k_blit(const int row, const int col, const int height, const int width)
 {
 	bool refreshAll = false;
 	int r, c;
@@ -171,7 +175,7 @@ static void drv_vusolo4k_blit(const int row, const int col, const int height, co
 	{
 		for (c = col; c < col + width; c++)
 		{
-			drv_vusolo4k_set_pixel(r, c, drv_generic_graphic_rgb(r, c));
+			drv_vuplus4k_set_pixel(r, c, drv_generic_graphic_rgb(r, c));
 		}
 	}
 	for (r = row; r < row + height; r++)
@@ -199,7 +203,7 @@ static void drv_vusolo4k_blit(const int row, const int col, const int height, co
 	}
 }
 
-static int drv_vusolo4k_backlight(int number)
+static int drv_vuplus4k_backlight(int number)
 {
 	int value = 0;
 	value = 255 * number / 10;
@@ -217,7 +221,7 @@ static int drv_vusolo4k_backlight(int number)
 }
 
 /* start graphic display */
-static int drv_vusolo4k_start(const char *section)
+static int drv_vuplus4k_start(const char *section)
 {
 	int i;
 	char *s;
@@ -249,7 +253,7 @@ static int drv_vusolo4k_start(const char *section)
 		backlight = 10;
 
 	/* open communication with the display */
-	if (drv_vusolo4k_open(section) < 0)
+	if (drv_vuplus4k_open(section) < 0)
 	{
 		return -1;
 	}
@@ -272,9 +276,9 @@ static int drv_vusolo4k_start(const char *section)
 		return -1;
 	}
 
-	drv_vusolo4k_backlight(backlight);
+	drv_vuplus4k_backlight(backlight);
 
-	/* set width/height from vusolo4k firmware specs */
+	/* set width/height from vuplus4k firmware specs */
 	DROWS = yres;
 	DCOLS = xres;
 
@@ -289,7 +293,7 @@ static void plugin_backlight(RESULT * result, RESULT * arg1)
 {
 	int bl_on;
 	bl_on = (R2N(arg1) == 0 ? 0 : 1);
-	drv_vusolo4k_backlight(bl_on);
+	drv_vuplus4k_backlight(bl_on);
 	SetResult(&result, R_NUMBER, &bl_on);
 }
 
@@ -311,22 +315,22 @@ static void plugin_backlight(RESULT * result, RESULT * arg1)
 
 
 /* list models */
-int drv_vusolo4k_list(void)
+int drv_vuplus4k_list(void)
 {
-	printf("vusolo4k OLED driver");
+	printf("vuplus4k OLED driver");
 	return 0;
 }
 
 /* initialize driver & display */
-int drv_vusolo4k_init(const char *section, const int quiet)
+int drv_vuplus4k_init(const char *section, const int quiet)
 {
 	int ret;
 
 	/* real worker functions */
-	drv_generic_graphic_real_blit = drv_vusolo4k_blit;
+	drv_generic_graphic_real_blit = drv_vuplus4k_blit;
 
 	/* start display */
-	if ((ret = drv_vusolo4k_start(section)) != 0)
+	if ((ret = drv_vuplus4k_start(section)) != 0)
 		return ret;
 
 	/* initialize generic graphic driver */
@@ -354,7 +358,7 @@ int drv_vusolo4k_init(const char *section, const int quiet)
 
 
 /* close driver & display */
-int drv_vusolo4k_quit(const int quiet)
+int drv_vuplus4k_quit(const int quiet)
 {
 	info("%s: shutting down.", Name);
 
@@ -400,15 +404,15 @@ int drv_vusolo4k_quit(const int quiet)
 	drv_generic_graphic_quit();
 
 	debug("closing connection");
-	drv_vusolo4k_close();
+	drv_vuplus4k_close();
 
 	return (0);
 }
 
 
-DRIVER drv_vusolo4k = {
+DRIVER drv_vuplus4k = {
     .name = Name,
-    .list = drv_vusolo4k_list,
-    .init = drv_vusolo4k_init,
-    .quit = drv_vusolo4k_quit,
+    .list = drv_vuplus4k_list,
+    .init = drv_vuplus4k_init,
+    .quit = drv_vuplus4k_quit,
 };

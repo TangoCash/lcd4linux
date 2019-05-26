@@ -100,7 +100,7 @@ extern DRIVER drv_USBLCD;
 extern DRIVER drv_vnc;
 extern DRIVER drv_WincorNixdorf;
 extern DRIVER drv_X11;
-extern DRIVER drv_vusolo4k;
+extern DRIVER drv_vuplus4k;
 
 /* output file for Image driver
  * has to be defined here because it's referenced
@@ -271,7 +271,7 @@ DRIVER *Driver[] = {
     &drv_X11,
 #endif
 #ifdef WITH_VUSOLO4K
-    &drv_vusolo4k,
+    &drv_vuplus4k,
 #endif
 
     NULL,
