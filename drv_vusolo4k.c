@@ -202,7 +202,7 @@ static void drv_vusolo4k_blit(const int row, const int col, const int height, co
 static int drv_vusolo4k_backlight(int number)
 {
 	int value = 0;
-	value = 255 * brightness / 10;
+	value = 255 * number / 10;
 
 	FILE *f = fopen("/proc/stb/lcd/oled_brightness", "w");
 	if (!f)
