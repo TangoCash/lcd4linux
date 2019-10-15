@@ -270,7 +270,7 @@ DRIVER *Driver[] = {
 #ifdef WITH_X11
     &drv_X11,
 #endif
-#ifdef WITH_VUSOLO4K
+#ifdef WITH_VUPLUS4K
     &drv_vuplus4k,
 #endif
 
