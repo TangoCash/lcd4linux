@@ -111,6 +111,13 @@ static struct SPFdev spfDevices[] =
 		.yRes = 600,
 	},
 	{
+		.type = "SPF-83M",
+		.vendorID = 0x04e8,
+		.productID = {0x2005, 0x2006},
+		.xRes = 800,
+		.yRes = 600,
+	},
+	{
 		.type = "SPF-85H",
 		.vendorID = 0x04e8,
 		.productID = {0x2012, 0x2013},
