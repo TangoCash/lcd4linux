@@ -662,9 +662,9 @@ static void cfg_dump(void)
 
 int cfg_init(const char *file)
 {
-    if (cfg_check_source(file) == -1) {
-	return -1;
-    }
+//    if (cfg_check_source(file) == -1) {
+//	return -1;
+//    }
 
     if (cfg_read(file) < 0)
 	return -1;
