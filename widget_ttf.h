@@ -46,6 +46,7 @@ typedef struct WIDGET_TTF
 	PROPERTY _width;		/* scale font to witdh */
 	PROPERTY _height;		/* scale font to height */
 	PROPERTY align;		/* align font to L/C/R */
+	PROPERTY debugborder;		/* outer line color */
 } WIDGET_TTF;
 
 extern WIDGET_CLASS Widget_Truetype;
