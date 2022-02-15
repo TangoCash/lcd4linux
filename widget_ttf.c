@@ -134,7 +134,7 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 			do
 			{
 				size--;
-				err = gdImageStringFT(NULL,&mrect[0],0,font,size,0.,0,0,"Äp");
+				err = gdImageStringFT(NULL,&mrect[0],0,font,size,0.,0,0,"[Äp}§|");
 				err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
 			}
 			while ((brect[2]-brect[6] > _width) || (mrect[3]-mrect[7] > _height));
@@ -143,7 +143,7 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 		}
 		else
 		{
-			err = gdImageStringFT(NULL,&mrect[0],0,font,size,0.,0,0,"Äp");
+			err = gdImageStringFT(NULL,&mrect[0],0,font,size,0.,0,0,"[Äp}§|");
 			err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
 
 			if ((_width > 0) && (_height > 0))
@@ -157,6 +157,7 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 				y = mrect[3]-mrect[7];
 			}
 		}
+
 		Image->gdImage = gdImageCreateTrueColor(x,y);
 		gdImageSaveAlpha(Image->gdImage, 1);
 
