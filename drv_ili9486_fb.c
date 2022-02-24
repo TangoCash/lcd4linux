@@ -75,7 +75,9 @@ static unsigned char * newLCD = NULL, * oldLCD = NULL;
 
 #define WIDTH_MAX 480
 #define HEIGHT_MAX 320
-#define BPP_MAX 32
+#define BPP_MAX 16
+
+#define SET_BYTE(INPUT, VALUE, POSITION) (INPUT=(VALUE<<(POSITION<<3))|(INPUT&(0xFFFFFFFF^(0xFF<<(POSITION<<3)))))
 
 static int ili9486_fb_open(const char *dev, int bpp_value, int xres_value, int yres_value)
 {
@@ -86,15 +88,15 @@ static int ili9486_fb_open(const char *dev, int bpp_value, int xres_value, int y
 	switch (bpp)
 	{
 		case 8:
-			stride_bpp_value = 1;
+			stride_bpp_value = 2;
 			break;
 		case 15:
 		case 16:
-			stride_bpp_value = 2;
+			stride_bpp_value = 4;
 			break;
 		case 24:
 		case 32:
-			stride_bpp_value = 4;
+			stride_bpp_value = 6;
 			break;
 		default:
 			stride_bpp_value = (bpp + 7) / 8;
@@ -199,20 +201,22 @@ static void drv_ili9486_fb_set_pixel(int x, int y, RGBA pix)
 	unsigned char green = pix.G;
 	unsigned char blue = pix.B;
 
-	red = (red >> 3) & 0x1f;
-	green = (green >> 3) & 0x1f;
-	blue = (blue >> 3) & 0x1f;
+	uint32_t data = NULL;
+	SET_BYTE(data, blue, 0);
+	SET_BYTE(data, green, 1);
+	SET_BYTE(data, red, 2);
 
-	location = (x * xres + y) * stride_bpp_value / 2;
-	pix = drv_generic_graphic_rgb(x, y);
-	if (bpp == 32) {
-		*(newLCD + location + 0) = pix.R;
-		*(newLCD + location + 1) = pix.G;
-		*(newLCD + location + 2) = pix.B;
-	} else {
-		*(newLCD + location + 0) = red << 3 | green >> 2;
-		*(newLCD + location + 1) = green << 6 | blue << 1;
-	}
+	uint32_t colraw = ((data & 0x00FF0000) >> (16 + 8 - 5) << 11) |  // red
+			  ((data & 0x0000FF00) >> ( 8 + 8 - 6) << 5) |   // green
+			  ((data & 0x000000FF) >> ( 0 + 8 - 5) << 0);    // blue;
+
+	unsigned char col1 = colraw & 0x0000FF;
+	unsigned char col2 = (colraw & 0x00FF00) >> 8;
+
+ 	location = (x * xres + y) * stride_bpp_value / 2;
+
+	*(newLCD + location + 0) = col1;
+	*(newLCD + location + 1) = col2;
 }
 
 static void drv_ili9486_fb_blit(const int row, const int col, const int height, const int width)
