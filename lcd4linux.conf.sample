@@ -590,7 +590,7 @@ Display ILI9486_FB {
     Driver 'ili9486_fb'
     Port '/dev/fb1'
     Size '480x320'
-    Bpp '24'
+    Bpp '16'
     Font '24x42'
     Basecolor '000000'
     Foreground 'ffffffff'
