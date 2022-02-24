@@ -39,7 +39,7 @@ AC_ARG_WITH(
   [                        Newhaven, Noritake, NULL, Pertelian, PHAnderson,]
   [                        PICGraphic, picoLCD, picoLCDGraphic, PNG, PPM, RouterBoard,]
   [                        Sample, SamsungSPF, serdisplib, ShuttleVFD, SimpleLCD, st2205, T6963,]
-  [                        TeakLCM, Trefon, ULA200, USBHUB, USBLCD, VNC, WincorNixdorf, X11, VUPLUS4K, ILI9486_FB],
+  [                        TeakLCM, TEW673GRU, Trefon, ULA200, USBHUB, USBLCD, VNC, WincorNixdorf, X11, VUPLUS4K, ILI9486_FB],
   drivers=$withval,
   drivers=all
 )
@@ -107,6 +107,7 @@ for driver in $drivers; do
 	 SHUTTLEVFD="yes"
          SIMPLELCD="yes"
          T6963="yes"
+         TEW673GRU="yes"
          TeakLCM="yes"
          Trefon="yes"
          ULA200="yes"
@@ -261,6 +262,9 @@ for driver in $drivers; do
          ;;
       TeakLCM)
          TeakLCM=$val
+         ;;
+      TEW673GRU)
+         TEW673GRU=$val
          ;;
       Trefon)
          Trefon=$val
@@ -815,6 +819,18 @@ if test "$TeakLCM" = "yes"; then
    SERIAL="yes"
    DRIVERS="$DRIVERS drv_TeakLCM.o"
    AC_DEFINE(WITH_TEAK_LCM,1,[TeakLCM driver])
+fi
+
+if test "$TEW673GRU" = "yes"; then
+   if test "$has_spidev" = "true"; then
+      GRAPHIC="yes"
+      TEXT="yes"
+      SPIDEV="yes"
+      DRIVERS="$DRIVERS drv_TEW673GRU.o"
+      AC_DEFINE(WITH_TEW673GRU,1,[TEW673GRU driver])
+   else
+      AC_MSG_WARN(linux/spi/spidev.h not found: TEW673GRU driver disabled)
+   fi
 fi
 
 if test "$Trefon" = "yes"; then

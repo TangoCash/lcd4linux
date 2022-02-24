@@ -567,6 +567,11 @@ Display VNC {
     HttpPort	 '5800'
 }
 
+Display TEW673GRU {
+    Driver       'TEW673GRU'
+    Font         '6x8'
+    Port         '/dev/spidev1.0'
+}
 
 Display FutabaVFD {
     Driver 'FutabaVFD'
