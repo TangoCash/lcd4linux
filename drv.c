@@ -101,6 +101,7 @@ extern DRIVER drv_vnc;
 extern DRIVER drv_WincorNixdorf;
 extern DRIVER drv_X11;
 extern DRIVER drv_vuplus4k;
+extern DRIVER drv_ili9486_fb;
 
 /* output file for Image driver
  * has to be defined here because it's referenced
@@ -272,6 +273,9 @@ DRIVER *Driver[] = {
 #endif
 #ifdef WITH_VUPLUS4K
     &drv_vuplus4k,
+#endif
+#ifdef WITH_ILI9486_FB
+    &drv_ili9486_fb,
 #endif
 
     NULL,

@@ -39,7 +39,7 @@ AC_ARG_WITH(
   [                        Newhaven, Noritake, NULL, Pertelian, PHAnderson,]
   [                        PICGraphic, picoLCD, picoLCDGraphic, PNG, PPM, RouterBoard,]
   [                        Sample, SamsungSPF, serdisplib, ShuttleVFD, SimpleLCD, st2205, T6963,]
-  [                        TeakLCM, Trefon, ULA200, USBHUB, USBLCD, VNC, WincorNixdorf, X11, VUPLUS4K],
+  [                        TeakLCM, Trefon, ULA200, USBHUB, USBLCD, VNC, WincorNixdorf, X11, VUPLUS4K, ILI9486_FB],
   drivers=$withval,
   drivers=all
 )
@@ -116,6 +116,7 @@ for driver in $drivers; do
 	 WINCORNIXDORF="yes"
          X11="yes"
          VUPLUS4K="yes"
+         ILI9486_FB="yes"
          ;;
       ASTUSB)
          ASTUSB=$val
@@ -284,6 +285,9 @@ for driver in $drivers; do
          ;;
       VUPLUS4K)
          VUPLUS4K=$val
+         ;;
+      ILI9486_FB)
+         ILI9486_FB=$val
          ;;
       *)
          AC_MSG_ERROR([Unknown driver '$driver'])
@@ -774,6 +778,12 @@ if test "$VUPLUS4K" = "yes"; then
    GRAPHIC="yes"
    DRIVERS="$DRIVERS drv_vuplus4k.o"
    AC_DEFINE(WITH_VUPLUS4K,1,[vuplus4k driver])
+fi
+
+if test "$ILI9486_FB" = "yes"; then
+   GRAPHIC="yes"
+   DRIVERS="$DRIVERS drv_ili9486_fb.o"
+   AC_DEFINE(WITH_ILI9486_FB,1,[ili9486 fb driver])
 fi
 
 if test "$ST2205" = "yes"; then

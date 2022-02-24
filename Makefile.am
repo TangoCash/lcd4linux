@@ -86,6 +86,7 @@ drv_FW8888.c                  \
 drv_G15.c                     \
 drv_GLCD2USB.c glcd2usb.h     \
 drv_HD44780.c                 \
+drv_ili9486_fb.c              \
 drv_Image.c                   \
 drv_IRLCD.c                   \
 drv_LCD2USB.c                 \
