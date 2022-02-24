@@ -25,6 +25,14 @@
  */
 
 /*
+ * Hardware for testing: orange pi pc2 with TFT 3.5 Inch LCD Touch Screen SPI RGB Display
+ */
+
+/*
+ * TODO: tochscreen
+ */
+
+/*
  *
  * exported fuctions:
  *
