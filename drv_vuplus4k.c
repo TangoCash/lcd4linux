@@ -72,7 +72,7 @@ typedef enum { false = 0, true = !false } bool;
 static char Name[] = "vuplus4k";
 
 /* Display data */
-static int fd = -1, bpp = 0, xres = 0, yres = 0, backlight = 0;
+static int fd = -1, bpp = 0, stride_bpp_value = 0, xres = 0, yres = 0, stride = 0, backlight = 0;
 static unsigned char * newLCD = NULL, * oldLCD = NULL;
 
 static int lcd_read_value(const char *filename)
@@ -93,6 +93,26 @@ static int vuplus4k_open(const char *dev)
 	bpp = lcd_read_value(LCD_BPP);
 	xres = lcd_read_value(LCD_XRES);
 	yres = lcd_read_value(LCD_YRES);
+
+	switch (bpp)
+	{
+		case 8:
+			stride_bpp_value = 1;
+			break;
+		case 15:
+		case 16:
+			stride_bpp_value = 2;
+			break;
+		case 24:
+		case 32:
+			stride_bpp_value = 4;
+			break;
+		default:
+			stride_bpp_value = (bpp + 7) / 8;
+	}
+
+	stride = xres * stride_bpp_value;
+
 	fd = open(dev, O_RDWR);
 	if (fd == -1) {
 		printf("cannot open lcd device\n");
@@ -158,7 +178,7 @@ static void drv_vuplus4k_set_pixel(int x, int y, RGBA pix)
 {
 	long int location;
 
-	location = (x * xres + y) * 4;
+	location = (x * xres + y) * stride_bpp_value;
 	pix = drv_generic_graphic_rgb(x, y);
 	*(newLCD + location + 0) = pix.B;
 	*(newLCD + location + 1) = pix.G;
@@ -198,7 +218,6 @@ static void drv_vuplus4k_blit(const int row, const int col, const int height, co
 				memcpy(oldLCD, newLCD, sizeof(newLCD)+1);
 			}
 		}
-		int stride = xres * 4;
 		write(fd, newLCD + stride, stride * yres);
 	}
 }
@@ -259,17 +278,17 @@ static int drv_vuplus4k_start(const char *section)
 	}
 
 	/* you surely want to allocate a framebuffer or something... */
-	newLCD = (unsigned char *)malloc(xres * yres * 4);
+	newLCD = (unsigned char *)malloc(yres * stride);
 	if (newLCD)
-		memset(newLCD, 0, xres * yres * 4);
+		memset(newLCD, 0, yres * stride);
 
 	if (newLCD == NULL) {
 		error("%s: newLCD buffer could not be allocated: malloc() failed", Name);
 		return -1;
 	}
-	oldLCD = (unsigned char *)malloc(xres * yres * 4);
+	oldLCD = (unsigned char *)malloc(yres * stride);
 	if (oldLCD)
-		memset(oldLCD, 0, xres * yres * 4);
+		memset(oldLCD, 0, yres * stride);
 
 	if (oldLCD == NULL) {
 		error("%s: oldLCD buffer could not be allocated: malloc() failed", Name);
