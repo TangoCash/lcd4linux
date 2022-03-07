@@ -211,7 +211,11 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 		int ox = gdImageSX(gdImage);
 		int oy = gdImageSY(gdImage);
 		int nx = ox*scale/100;
+		if (nx < 1)
+			nx = 1;
 		int ny = oy*scale/100;
+		if (ny < 1)
+			ny = 1;
 		scaled_image = gdImageCreateTrueColor(nx,ny);
 		gdImageSaveAlpha(scaled_image, 1);
 		gdImageFill(scaled_image, 0, 0, gdImageColorAllocateAlpha(scaled_image, 0, 0, 0, 127));
