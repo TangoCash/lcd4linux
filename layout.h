@@ -28,7 +28,7 @@
 #define _LAYOUT_H_
 
 /* number of layers */
-#define LAYERS 5
+#define LAYERS 6
 
 int layout_init(const char *section);
 
