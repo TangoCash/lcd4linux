@@ -223,6 +223,26 @@ static void widget_image_render(const char *Name, WIDGET_IMAGE * Image)
 		gdImageDestroy(Image->gdImage);
 		Image->gdImage = scaled_image;
 	}
+	else if (scale == -1) // auto-scale to widget width but limited to widget height
+	{
+		gdImage = Image->gdImage;
+		gdImagePtr scaled_image;
+		int ox = gdImageSX(gdImage);
+		int oy = gdImageSY(gdImage);
+		int nx = _width;
+		int ny = nx*oy/ox;
+		if (ny > _height)
+		{
+			ny = _height;
+			nx = ny*ox/oy;
+		}
+		scaled_image = gdImageCreateTrueColor(nx,ny);
+		gdImageSaveAlpha(scaled_image, 1);
+		gdImageFill(scaled_image, 0, 0, gdImageColorAllocateAlpha(scaled_image, 0, 0, 0, 127));
+		gdImageCopyResized(scaled_image,Image->gdImage,0,0,0,0,nx,ny,ox,oy);
+		gdImageDestroy(Image->gdImage);
+		Image->gdImage = scaled_image;
+	}
 
 	if (center)
 	{
