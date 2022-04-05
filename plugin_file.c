@@ -36,6 +36,7 @@
 /* define the include files you need */
 #include "config.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -87,6 +88,65 @@ static void my_readline(RESULT * result, RESULT * arg1, RESULT * arg2)
     SetResult(&result, R_STRING, &value);
 }
 
+/* function 'readconf' */
+/* takes three arguments, config file name, (config key + delimiter) and fallback value */
+/* returns value of config key */
+
+static void my_readconf(RESULT *result, RESULT *arg1, RESULT *arg2, RESULT *arg3)
+{
+	char *key, *fallback, *s, *b;
+	char *value;
+	char line[512];
+	FILE *fp;
+
+	int i = 0, found = 0;
+
+	key = R2S(arg2);
+	int keylen = strlen(R2S(arg2));
+	fallback = R2S(arg3);
+
+	fp = fopen(R2S(arg1), "r");
+	if (!fp)
+	{
+		info("readconf couldn't open file '%s'", R2S(arg1));
+	}
+	else
+	{
+		while (!feof(fp))
+		{
+			i++;
+			fgets(line, sizeof(line), fp);
+			s = strstr(line, key);
+			if (s == NULL)
+				continue;
+			b = &line[s - line + keylen];
+			value = malloc(strlen(b) + 1);
+			strcpy(value, b);
+			found = 1;
+		}
+		fclose(fp);
+	}
+
+	if (found == 0)
+	{
+		value = malloc(strlen(fallback) + 1);
+		strcpy(value, fallback);
+	}
+
+	// remove trailing line feed
+	int len = strlen(value);
+	if ((len > 0) && (value[len - 1] == '\n'))
+		value[len - 1] = '\0';
+	len = strlen(value);
+	if ((len > 0) && (value[len - 1] == '\r'))
+		value[len - 1] = '\0';
+
+	//info("readconf: %s %sfound, value '%s', fallback '%s'", key, found == 0 ? "not " : "", value, fallback);
+
+	/* store result */
+	SetResult(&result, R_STRING, value);
+}
+
 /* function 'exist' */
 /* takes one argument, file name */
 /* returns 1 if found, 0 if not */
@@ -109,11 +169,11 @@ static void my_exist(RESULT * result, RESULT * arg1)
 /* MUST NOT be declared 'static'! */
 int plugin_init_file(void)
 {
-
     /* register all our cool functions */
     /* the second parameter is the number of arguments */
     /* -1 stands for variable argument list */
     AddFunction("file::readline", 2, my_readline);
+    AddFunction("file::readconf", 3, my_readconf);
     AddFunction("file::exist", 1, my_exist);
 
     return 0;
