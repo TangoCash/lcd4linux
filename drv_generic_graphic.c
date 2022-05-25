@@ -525,7 +525,6 @@ int drv_generic_graphic_bar_draw(WIDGET * W)
 		val1 = max - val1;
 		val2 = max - val2;
 		rev = 1;
-		break;
 
 	case DIR_EAST:
 		for (y = 0; y < YRES; y++)
@@ -558,7 +557,6 @@ int drv_generic_graphic_bar_draw(WIDGET * W)
 		val1 = max - val1;
 		val2 = max - val2;
 		rev = 1;
-		break;
 
 	case DIR_SOUTH:
 		for (x = 0; x < XRES; x++)
