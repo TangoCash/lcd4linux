@@ -99,6 +99,9 @@ static int INVERTED = 0;
 /* must be implemented by the real driver */
 void (*drv_generic_graphic_real_blit) () = NULL;
 
+/* can be implemented by the real driver */
+void (*drv_generic_graphic_real_clear) () = NULL;
+
 
 /****************************************/
 /*** generic Framebuffer stuff        ***/
@@ -771,7 +774,10 @@ int drv_generic_graphic_clear(void)
 		for (i = 0; i < LCOLS * LROWS; i++)
 			drv_generic_graphic_FB[l][i] = NO_COL;
 
-	drv_generic_graphic_blit(0, 0, LROWS, LCOLS);
+	if (drv_generic_graphic_real_clear)
+		drv_generic_graphic_real_clear(NO_COL);
+	else
+		drv_generic_graphic_blit(0, 0, LROWS, LCOLS);
 
 	return 0;
 }

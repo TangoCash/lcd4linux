@@ -40,6 +40,9 @@ extern RGBA NO_COL;		/* no color (completely transparent) */
 /* these functions must be implemented by the real driver */
 extern void (*drv_generic_graphic_real_blit) (const int row, const int col, const int height, const int width);
 
+/* these functions can be implemented by the real driver */
+extern void (*drv_generic_graphic_real_clear) (const RGBA rgba);
+
 /* helper function to get pixel color or gray value */
 extern RGBA drv_generic_graphic_rgb(const int row, const int col);
 extern unsigned char drv_generic_graphic_gray(const int row, const int col);
