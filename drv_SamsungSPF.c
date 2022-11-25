@@ -653,13 +653,18 @@ int drv_SamsungSPF_init(const char *section, const int quiet)
 
 	free(s);
 
+	i = 0;
+
 	/* try to open USB device */
 	drv_SamsungSPF_find();
-	while (!myDev)   //endless loop waitung for SPF
+
+	while (!myDev && i < 4)   // no endless loop waiting for SPF
 	{
+		i++;
 		sleep(5);
 		drv_SamsungSPF_find();
 	}
+
 	if (!myDev)
 	{
 		error("%s: No Samsung '%s' found!", Name, myFrame->type);
