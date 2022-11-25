@@ -219,10 +219,10 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 				break;
 			case 'C':
 			case 'M':
-				x = (_width - brect[2]-brect[6])/2 - brect[6];
-				break;
 			default:
-				x = (_width - brect[2]-brect[6])/2 - brect[6];
+				x = (_width / 2) - ((brect[2] - brect[6]) / 2);
+				if (x < brect[6])
+					x = brect[6];
 				break;
 			}
 		else

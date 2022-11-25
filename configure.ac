@@ -115,6 +115,9 @@ AC_ARG_WITH(outb,
 
 AC_CHECK_HEADERS([asm/io.h] [linux/parport.h linux/ppdev.h], [has_parport="true"], [has_parport="false"])
 
+# check for spidev
+AC_CHECK_HEADERS([linux/spi/spidev.h], [has_spidev="true"], [has_spidev="false"])
+
 # drivers
 sinclude(drivers.m4)
 

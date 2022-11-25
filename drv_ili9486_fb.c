@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 redblue
+ * Copyright (C) 2021 redblue
  *
  * This file is part of LCD4Linux.
  *
@@ -20,14 +20,23 @@
  */
 
 /*
- * working on vusolo4k, vuduo4k
+ * Driver use fbtft and fb_ili9486 linux kernel modules
+ * on orange pi/rapsberry pi hardware
+ */
+
+/*
+ * Hardware for testing: orange pi pc2 with TFT 3.5 Inch LCD Touch Screen SPI RGB Display
+ */
+
+/*
+ * TODO: tochscreen
  */
 
 /*
  *
  * exported fuctions:
  *
- * struct DRIVER drv_vuplus4k
+ * struct DRIVER drv_ili9486_fb
  *
  */
 
@@ -56,56 +65,38 @@
 
 #include "drv_generic_graphic.h"
 
-#define LCD_XRES "/proc/stb/lcd/xres"
-#define LCD_YRES "/proc/stb/lcd/yres"
-#define LCD_BPP "/proc/stb/lcd/bpp"
-
-#ifndef LCD_IOCTL_ASC_MODE
-#define LCDSET                                  0x1000
-#define LCD_IOCTL_ASC_MODE              (21|LCDSET)
-#define LCD_MODE_ASC                    0
-#define LCD_MODE_BIN                    1
-#endif
-
 typedef enum { false = 0, true = !false } bool;
 
-static char Name[] = "vuplus4k";
+static char Name[] = "ili9486_fb";
 
 /* Display data */
 static int fd = -1, bpp = 0, stride_bpp_value = 0, xres = 0, yres = 0, stride = 0, backlight = 0;
 static unsigned char * newLCD = NULL, * oldLCD = NULL;
 
-static int lcd_read_value(const char *filename)
-{
-	int value = 0;
-	FILE *_fd = fopen(filename, "r");
-	if (_fd) {
-		int tmp;
-		if (fscanf(_fd, "%x", &tmp) == 1)
-			value = tmp;
-		fclose(_fd);
-	}
-	return value;
-}
+#define WIDTH_MAX 480
+#define HEIGHT_MAX 320
+#define BPP_MAX 16
 
-static int vuplus4k_open(const char *dev)
+#define SET_BYTE(INPUT, VALUE, POSITION) (INPUT=(VALUE<<(POSITION<<3))|(INPUT&(0xFFFFFFFF^(0xFF<<(POSITION<<3)))))
+
+static int ili9486_fb_open(const char *dev, int bpp_value, int xres_value, int yres_value)
 {
-	bpp = lcd_read_value(LCD_BPP);
-	xres = lcd_read_value(LCD_XRES);
-	yres = lcd_read_value(LCD_YRES);
+	bpp = bpp_value;
+	xres = xres_value;
+	yres = yres_value;
 
 	switch (bpp)
 	{
 		case 8:
-			stride_bpp_value = 1;
+			stride_bpp_value = 2;
 			break;
 		case 15:
 		case 16:
-			stride_bpp_value = 2;
+			stride_bpp_value = 4;
 			break;
 		case 24:
 		case 32:
-			stride_bpp_value = 4;
+			stride_bpp_value = 6;
 			break;
 		default:
 			stride_bpp_value = (bpp + 7) / 8;
@@ -115,19 +106,14 @@ static int vuplus4k_open(const char *dev)
 
 	fd = open(dev, O_RDWR);
 	if (fd == -1) {
-		printf("cannot open lcd device\n");
+		error("cannot open lcd device\n");
 		return -1;
-	}
-
-	int tmp = LCD_MODE_BIN;
-	if (ioctl(fd, LCD_IOCTL_ASC_MODE, &tmp)) {
-		printf("failed to set lcd bin mode\n");
 	}
 
 	return 0;
 }
 
-static int vuplus4k_close()
+static int ili9486_fb_close()
 {
 	if (newLCD)
 	{
@@ -144,12 +130,18 @@ static int vuplus4k_close()
 		close(fd);
 		fd=-1;
 	}
+
 	return 0;
 }
 
-static int drv_vuplus4k_open(const char *section)
+static int drv_ili9486_fb_open(const char *section)
 {
 	char *dev;
+	char *size;
+	char *bpp_dev;
+	int bpp_value;
+	int xres_value;
+	int yres_value;
 
 	dev = cfg_get(section, "Port", NULL);
 	if (dev == NULL || *dev == '\0')
@@ -158,35 +150,76 @@ static int drv_vuplus4k_open(const char *section)
 		return -1;
 	}
 
-	int h = vuplus4k_open(dev);
+	size = cfg_get(section, "Size", NULL);
+	if (size == NULL || *size == '\0')
+	{
+		error("%s: no '%s.Size' entry from %s", Name, section, cfg_source());
+		return -1;
+	}
+
+	if (sscanf(size, "%dx%d", &xres_value, &yres_value) != 2 || xres_value < 1 || yres_value < 1 || xres_value > WIDTH_MAX || yres_value > HEIGHT_MAX) {
+		error("%s: bad %s.Size '%s' from %s", Name, section, size, cfg_source());
+		free(size);
+		return -1;
+	}
+
+	bpp_dev = cfg_get(section, "Bpp", NULL);
+	if (bpp_dev == NULL || *bpp_dev == '\0')
+	{
+		error("%s: no '%s.Bpp' entry from %s", Name, section, cfg_source());
+		return -1;
+	}
+
+	if (sscanf(bpp_dev, "%d", &bpp_value) != 1 || bpp_value < 1 || bpp_value > BPP_MAX) {
+		error("%s: bad %s.Bpp '%s' from %s", Name, section, bpp_dev, cfg_source());
+		free(bpp_dev);
+		return -1;
+	}
+
+	int h = ili9486_fb_open(dev, bpp_value, xres_value, yres_value);
 	if (h == -1)
 	{
-		error("%s: cannot open vuplus4k device %s", Name, dev);
+		error("%s: cannot open ili9486 device %s", Name, dev);
 		return -1;
 	}
 
 	return 0;
 }
 
-static int drv_vuplus4k_close(void)
+static int drv_ili9486_fb_close(void)
 {
-	vuplus4k_close();
+	ili9486_fb_close();
+
 	return 0;
 }
 
-static void drv_vuplus4k_set_pixel(int x, int y, RGBA pix)
+static void drv_ili9486_fb_set_pixel(int x, int y, RGBA pix)
 {
 	long int location;
 
-	location = (x * xres + y) * stride_bpp_value;
-	pix = drv_generic_graphic_rgb(x, y);
-	*(newLCD + location + 0) = pix.B;
-	*(newLCD + location + 1) = pix.G;
-	*(newLCD + location + 2) = pix.R;
-	*(newLCD + location + 3) = 0xff;
+	unsigned char red = pix.R;
+	unsigned char green = pix.G;
+	unsigned char blue = pix.B;
+
+	uint32_t data = NULL;
+	SET_BYTE(data, blue, 0);
+	SET_BYTE(data, green, 1);
+	SET_BYTE(data, red, 2);
+
+	uint32_t colraw = ((data & 0x00FF0000) >> (16 + 8 - 5) << 11) |  // red
+			  ((data & 0x0000FF00) >> ( 8 + 8 - 6) << 5) |   // green
+			  ((data & 0x000000FF) >> ( 0 + 8 - 5) << 0);    // blue;
+
+	unsigned char col1 = colraw & 0x0000FF;
+	unsigned char col2 = (colraw & 0x00FF00) >> 8;
+
+ 	location = (x * xres + y) * stride_bpp_value / 2;
+
+	*(newLCD + location + 0) = col1;
+	*(newLCD + location + 1) = col2;
 }
 
-static void drv_vuplus4k_blit(const int row, const int col, const int height, const int width)
+static void drv_ili9486_fb_blit(const int row, const int col, const int height, const int width)
 {
 	bool refreshAll = false;
 	int r, c;
@@ -195,7 +228,7 @@ static void drv_vuplus4k_blit(const int row, const int col, const int height, co
 	{
 		for (c = col; c < col + width; c++)
 		{
-			drv_vuplus4k_set_pixel(r, c, drv_generic_graphic_rgb(r, c));
+			drv_ili9486_fb_set_pixel(r, c, drv_generic_graphic_rgb(r, c));
 		}
 	}
 	for (r = row; r < row + height; r++)
@@ -222,25 +255,13 @@ static void drv_vuplus4k_blit(const int row, const int col, const int height, co
 	}
 }
 
-static int drv_vuplus4k_backlight(int number)
+static int drv_ili9486_fb_backlight(int number)
 {
-	int value = 0;
-	value = 255 * number / 10;
-
-	FILE *f = fopen("/proc/stb/lcd/oled_brightness", "w");
-	if (!f)
-		f = fopen("/proc/stb/fp/oled_brightness", "w");
-	if (f)
-	{
-		if (fprintf(f, "%d", value) == 0)
-			printf("write /proc/stb/lcd/oled_brightness failed!! (%m)\n");
-		fclose(f);
-	}
 	return 0;
 }
 
 /* start graphic display */
-static int drv_vuplus4k_start(const char *section)
+static int drv_ili9486_fb_start(const char *section)
 {
 	int i;
 	char *s;
@@ -272,7 +293,7 @@ static int drv_vuplus4k_start(const char *section)
 		backlight = 10;
 
 	/* open communication with the display */
-	if (drv_vuplus4k_open(section) < 0)
+	if (drv_ili9486_fb_open(section) < 0)
 	{
 		return -1;
 	}
@@ -295,11 +316,13 @@ static int drv_vuplus4k_start(const char *section)
 		return -1;
 	}
 
-	drv_vuplus4k_backlight(backlight);
+	drv_ili9486_fb_backlight(backlight);
 
-	/* set width/height from vuplus4k firmware specs */
+	/* set width/height from ili9486 firmware specs */
 	DROWS = yres;
 	DCOLS = xres;
+
+	info("%s: init succesfully, xres %d, yres %d, bpp %d, stride %d", Name, xres, yres, bpp, stride);
 
 	return 0;
 }
@@ -312,7 +335,7 @@ static void plugin_backlight(RESULT * result, RESULT * arg1)
 {
 	int bl_on;
 	bl_on = (R2N(arg1) == 0 ? 0 : 1);
-	drv_vuplus4k_backlight(bl_on);
+	drv_ili9486_fb_backlight(bl_on);
 	SetResult(&result, R_NUMBER, &bl_on);
 }
 
@@ -334,22 +357,23 @@ static void plugin_backlight(RESULT * result, RESULT * arg1)
 
 
 /* list models */
-int drv_vuplus4k_list(void)
+int drv_ili9486_fb_list(void)
 {
-	printf("vuplus4k OLED driver");
+	info("ili9486 OLED driver");
+
 	return 0;
 }
 
 /* initialize driver & display */
-int drv_vuplus4k_init(const char *section, const int quiet)
+int drv_ili9486_fb_init(const char *section, const int quiet)
 {
 	int ret;
 
 	/* real worker functions */
-	drv_generic_graphic_real_blit = drv_vuplus4k_blit;
+	drv_generic_graphic_real_blit = drv_ili9486_fb_blit;
 
 	/* start display */
-	if ((ret = drv_vuplus4k_start(section)) != 0)
+	if ((ret = drv_ili9486_fb_start(section)) != 0)
 		return ret;
 
 	/* initialize generic graphic driver */
@@ -377,7 +401,7 @@ int drv_vuplus4k_init(const char *section, const int quiet)
 
 
 /* close driver & display */
-int drv_vuplus4k_quit(const int quiet)
+int drv_ili9486_fb_quit(const int quiet)
 {
 	info("%s: shutting down.", Name);
 
@@ -423,15 +447,15 @@ int drv_vuplus4k_quit(const int quiet)
 	drv_generic_graphic_quit();
 
 	debug("closing connection");
-	drv_vuplus4k_close();
+	drv_ili9486_fb_close();
 
 	return (0);
 }
 
 
-DRIVER drv_vuplus4k = {
+DRIVER drv_ili9486_fb = {
     .name = Name,
-    .list = drv_vuplus4k_list,
-    .init = drv_vuplus4k_init,
-    .quit = drv_vuplus4k_quit,
+    .list = drv_ili9486_fb_list,
+    .init = drv_ili9486_fb_init,
+    .quit = drv_ili9486_fb_quit,
 };

@@ -92,6 +92,7 @@ extern DRIVER drv_serdisplib;
 extern DRIVER drv_ShuttleVFD;
 extern DRIVER drv_SimpleLCD;
 extern DRIVER drv_T6963;
+extern DRIVER drv_TEW673GRU;
 extern DRIVER drv_TeakLCM;
 extern DRIVER drv_Trefon;
 extern DRIVER drv_ula200;
@@ -101,6 +102,7 @@ extern DRIVER drv_vnc;
 extern DRIVER drv_WincorNixdorf;
 extern DRIVER drv_X11;
 extern DRIVER drv_vuplus4k;
+extern DRIVER drv_ili9486_fb;
 
 /* output file for Image driver
  * has to be defined here because it's referenced
@@ -249,6 +251,9 @@ DRIVER *Driver[] = {
 #ifdef WITH_TEAK_LCM
     &drv_TeakLCM,
 #endif
+#ifdef WITH_TEW673GRU
+    &drv_TEW673GRU,
+#endif
 #ifdef WITH_TREFON
     &drv_Trefon,
 #endif
@@ -272,6 +277,9 @@ DRIVER *Driver[] = {
 #endif
 #ifdef WITH_VUPLUS4K
     &drv_vuplus4k,
+#endif
+#ifdef WITH_ILI9486_FB
+    &drv_ili9486_fb,
 #endif
 
     NULL,

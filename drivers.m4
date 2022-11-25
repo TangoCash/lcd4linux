@@ -39,7 +39,7 @@ AC_ARG_WITH(
   [                        Newhaven, Noritake, NULL, Pertelian, PHAnderson,]
   [                        PICGraphic, picoLCD, picoLCDGraphic, PNG, PPM, RouterBoard,]
   [                        Sample, SamsungSPF, serdisplib, ShuttleVFD, SimpleLCD, st2205, T6963,]
-  [                        TeakLCM, Trefon, ULA200, USBHUB, USBLCD, VNC, WincorNixdorf, X11, VUPLUS4K],
+  [                        TeakLCM, TEW673GRU, Trefon, ULA200, USBHUB, USBLCD, VNC, WincorNixdorf, X11, VUPLUS4K, ILI9486_FB],
   drivers=$withval,
   drivers=all
 )
@@ -107,6 +107,7 @@ for driver in $drivers; do
 	 SHUTTLEVFD="yes"
          SIMPLELCD="yes"
          T6963="yes"
+         TEW673GRU="yes"
          TeakLCM="yes"
          Trefon="yes"
          ULA200="yes"
@@ -116,6 +117,7 @@ for driver in $drivers; do
 	 WINCORNIXDORF="yes"
          X11="yes"
          VUPLUS4K="yes"
+         ILI9486_FB="yes"
          ;;
       ASTUSB)
          ASTUSB=$val
@@ -261,6 +263,9 @@ for driver in $drivers; do
       TeakLCM)
          TeakLCM=$val
          ;;
+      TEW673GRU)
+         TEW673GRU=$val
+         ;;
       Trefon)
          Trefon=$val
          ;;
@@ -285,6 +290,9 @@ for driver in $drivers; do
       VUPLUS4K)
          VUPLUS4K=$val
          ;;
+      ILI9486_FB)
+         ILI9486_FB=$val
+         ;;
       *)
          AC_MSG_ERROR([Unknown driver '$driver'])
          ;;
@@ -305,6 +313,7 @@ PARPORT="no"
 SERIAL="no"
 I2C="no"
 KEYPAD="no"
+SPIDEV="no"
 
 # generic libraries
 LIBUSB="no"
@@ -776,6 +785,12 @@ if test "$VUPLUS4K" = "yes"; then
    AC_DEFINE(WITH_VUPLUS4K,1,[vuplus4k driver])
 fi
 
+if test "$ILI9486_FB" = "yes"; then
+   GRAPHIC="yes"
+   DRIVERS="$DRIVERS drv_ili9486_fb.o"
+   AC_DEFINE(WITH_ILI9486_FB,1,[ili9486 fb driver])
+fi
+
 if test "$ST2205" = "yes"; then
    if test "$has_st2205" = "true"; then
       GRAPHIC="yes"
@@ -804,6 +819,18 @@ if test "$TeakLCM" = "yes"; then
    SERIAL="yes"
    DRIVERS="$DRIVERS drv_TeakLCM.o"
    AC_DEFINE(WITH_TEAK_LCM,1,[TeakLCM driver])
+fi
+
+if test "$TEW673GRU" = "yes"; then
+   if test "$has_spidev" = "true"; then
+      GRAPHIC="yes"
+      TEXT="yes"
+      SPIDEV="yes"
+      DRIVERS="$DRIVERS drv_TEW673GRU.o"
+      AC_DEFINE(WITH_TEW673GRU,1,[TEW673GRU driver])
+   else
+      AC_MSG_WARN(linux/spi/spidev.h not found: TEW673GRU driver disabled)
+   fi
 fi
 
 if test "$Trefon" = "yes"; then
@@ -944,6 +971,12 @@ fi
 # libjpeg
 if test "$LIBJPEG" = "yes"; then
    DRVLIBS="$DRVLIBS -ljpeg"
+fi
+
+# generic spidev driver
+if test "$SPIDEV" = "yes"; then
+   DRIVERS="$DRIVERS drv_generic_spidev.o"
+   AC_DEFINE(WITH_SPIDEV, 1, [SPIDEV driver])
 fi
 
 # libusb

@@ -567,6 +567,11 @@ Display VNC {
     HttpPort	 '5800'
 }
 
+Display TEW673GRU {
+    Driver       'TEW673GRU'
+    Font         '6x8'
+    Port         '/dev/spidev1.0'
+}
 
 Display FutabaVFD {
     Driver 'FutabaVFD'
@@ -581,6 +586,16 @@ Display FutabaVFD {
     }
 }
 
+Display ILI9486_FB {
+    Driver 'ili9486_fb'
+    Port '/dev/fb1'
+    Size '480x320'
+    Bpp '16'
+    Font '24x42'
+    Basecolor '000000'
+    Foreground 'ffffffff'
+    Background '00000000'
+}
 
 #Plugin KVV {
 #    StationID '12_701'
@@ -1369,6 +1384,7 @@ Display 'ACool'
 #Display 'VNC'
 #Display 'FutabaVFD'
 #Display 'GLCD2USB'
+#Display 'ILI9486_FB'
 
 #Layout 'Default'
 Layout 'TestLayer'

@@ -71,6 +71,8 @@ drv_generic_i2c.c             \
 drv_generic_i2c.h             \
 drv_generic_keypad.c          \
 drv_generic_keypad.h          \
+drv_generic_spidev.c          \
+drv_generic_spidev.h          \
 drv_ASTUSB.c                  \
 drv_BeckmannEgle.c            \
 drv_BWCT.c                    \
@@ -86,6 +88,7 @@ drv_FW8888.c                  \
 drv_G15.c                     \
 drv_GLCD2USB.c glcd2usb.h     \
 drv_HD44780.c                 \
+drv_ili9486_fb.c              \
 drv_Image.c                   \
 drv_IRLCD.c                   \
 drv_LCD2USB.c                 \
@@ -117,6 +120,7 @@ drv_ShuttleVFD.c              \
 drv_SimpleLCD.c               \
 drv_T6963.c                   \
 drv_TeakLCM.c                 \
+drv_TEW673GRU.c               \
 drv_Trefon.c                  \
 drv_ula200.c                  \
 drv_USBHUB.c                  \
