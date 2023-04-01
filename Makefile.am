@@ -127,6 +127,7 @@ drv_USBHUB.c                  \
 drv_USBLCD.c                  \
 drv_vnc.c                     \
 drv_WincorNixdorf.c           \
+drv_vuduo2.c                  \
 drv_vuplus4k.c                \
 drv_X11.c                     \
                               \

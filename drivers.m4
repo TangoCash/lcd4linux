@@ -39,7 +39,7 @@ AC_ARG_WITH(
   [                        Newhaven, Noritake, NULL, Pertelian, PHAnderson,]
   [                        PICGraphic, picoLCD, picoLCDGraphic, PNG, PPM, RouterBoard,]
   [                        Sample, SamsungSPF, serdisplib, ShuttleVFD, SimpleLCD, st2205, T6963,]
-  [                        TeakLCM, TEW673GRU, Trefon, ULA200, USBHUB, USBLCD, VNC, WincorNixdorf, X11, VUPLUS4K, ILI9486_FB],
+  [                        TeakLCM, TEW673GRU, Trefon, ULA200, USBHUB, USBLCD, VNC, WincorNixdorf, X11, VUDUO2, VUPLUS4K, ILI9486_FB],
   drivers=$withval,
   drivers=all
 )
@@ -116,6 +116,7 @@ for driver in $drivers; do
          VNC="yes"
 	 WINCORNIXDORF="yes"
          X11="yes"
+         VUDUO2="yes"
          VUPLUS4K="yes"
          ILI9486_FB="yes"
          ;;
@@ -286,6 +287,9 @@ for driver in $drivers; do
          ;;
       X11)
          X11=$val
+         ;;
+      VUDUO2)
+         VUDUO2=$val
          ;;
       VUPLUS4K)
          VUPLUS4K=$val
@@ -777,6 +781,12 @@ if test "$SIMPLELCD" = "yes"; then
    SERIAL="yes"
    DRIVERS="$DRIVERS drv_SimpleLCD.o"
    AC_DEFINE(WITH_SIMPLELCD,1,[SimpleLCD driver])
+fi
+
+if test "$VUDUO2" = "yes"; then
+   GRAPHIC="yes"
+   DRIVERS="$DRIVERS drv_vuduo2.o"
+   AC_DEFINE(WITH_VUDUO2,1,[vuduo2 driver])
 fi
 
 if test "$VUPLUS4K" = "yes"; then
