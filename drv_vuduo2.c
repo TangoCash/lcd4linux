@@ -56,15 +56,11 @@
 
 #include "drv_generic_graphic.h"
 
-#define LCD_XRES "/proc/stb/lcd/xres"
-#define LCD_YRES "/proc/stb/lcd/yres"
-#define LCD_BPP "/proc/stb/lcd/bpp"
-
 #ifndef LCD_IOCTL_ASC_MODE
-#define LCDSET                                  0x1000
-#define LCD_IOCTL_ASC_MODE              (21|LCDSET)
-#define LCD_MODE_ASC                    0
-#define LCD_MODE_BIN                    1
+#define LCDSET			0x1000
+#define LCD_IOCTL_ASC_MODE	(21|LCDSET)
+#define LCD_MODE_ASC		0
+#define LCD_MODE_BIN		1
 #endif
 
 typedef enum { false = 0, true = !false } bool;
@@ -214,6 +210,7 @@ static int drv_vuduo2_backlight(int number)
 	int value = 0;
 	value = 255 * number / 10;
 
+#if 0 // currently not supported
 	FILE *f = fopen("/proc/stb/lcd/oled_brightness", "w");
 	if (!f)
 		f = fopen("/proc/stb/fp/oled_brightness", "w");
@@ -223,6 +220,7 @@ static int drv_vuduo2_backlight(int number)
 			printf("write /proc/stb/lcd/oled_brightness failed!! (%m)\n");
 		fclose(f);
 	}
+#endif
 	return 0;
 }
 

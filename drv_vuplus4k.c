@@ -56,15 +56,15 @@
 
 #include "drv_generic_graphic.h"
 
-#define LCD_XRES "/proc/stb/lcd/xres"
-#define LCD_YRES "/proc/stb/lcd/yres"
-#define LCD_BPP "/proc/stb/lcd/bpp"
+#define LCD_XRES		"/proc/stb/lcd/xres"
+#define LCD_YRES		"/proc/stb/lcd/yres"
+#define LCD_BPP			"/proc/stb/lcd/bpp"
 
 #ifndef LCD_IOCTL_ASC_MODE
-#define LCDSET                                  0x1000
-#define LCD_IOCTL_ASC_MODE              (21|LCDSET)
-#define LCD_MODE_ASC                    0
-#define LCD_MODE_BIN                    1
+#define LCDSET			0x1000
+#define LCD_IOCTL_ASC_MODE	(21|LCDSET)
+#define LCD_MODE_ASC		0
+#define LCD_MODE_BIN		1
 #endif
 
 typedef enum { false = 0, true = !false } bool;
