@@ -123,6 +123,7 @@ drv_TeakLCM.c                 \
 drv_TEW673GRU.c               \
 drv_Trefon.c                  \
 drv_ula200.c                  \
+drv_USB2VFD.c                 \
 drv_USBHUB.c                  \
 drv_USBLCD.c                  \
 drv_vnc.c                     \
