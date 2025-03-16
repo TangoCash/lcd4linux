@@ -96,6 +96,7 @@ extern DRIVER drv_TEW673GRU;
 extern DRIVER drv_TeakLCM;
 extern DRIVER drv_Trefon;
 extern DRIVER drv_ula200;
+extern DRIVER drv_USB2VFD;
 extern DRIVER drv_USBHUB;
 extern DRIVER drv_USBLCD;
 extern DRIVER drv_vnc;
@@ -260,6 +261,9 @@ DRIVER *Driver[] = {
 #endif
 #ifdef WITH_ULA200
     &drv_ula200,
+#endif
+#ifdef WITH_USB2VFD
+    &drv_USB2VFD,
 #endif
 #ifdef WITH_USBHUB
     &drv_USBHUB,
