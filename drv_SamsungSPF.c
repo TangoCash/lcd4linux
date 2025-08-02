@@ -194,6 +194,13 @@ static struct SPFdev spfDevices[] =
 		.xRes = 1024,
 		.yRes = 600,
 	},
+	{
+		.type = "SPF-800P",
+		.vendorID = 0x04e8,
+		.productID = {0x2037, 0x2038},
+		.xRes = 800,
+		.yRes = 480,
+	},
 };
 
 static int numFrames = sizeof(spfDevices) / sizeof(spfDevices[0]);
