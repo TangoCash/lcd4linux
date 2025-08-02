@@ -54,8 +54,9 @@
 #include "drv_generic_graphic.h"
 #include "jpeg_mem_dest.h"
 
-#define FILLSIZE 16384 // 16kB
+#define PADSIZE 0x10000 // 64kB
 #define HEADERSIZE 12
+#define TRAILERSIZE 2
 
 // Drivername for verbose output
 static char Name[] = "SamsungSPF";
@@ -404,63 +405,35 @@ static int drv_SamsungSPF_open()
 
 
 /* dummy function that sends something to the display */
-static int drv_SamsungSPF_send(char *data, unsigned int len)
+static int drv_SamsungSPF_send(char *data, unsigned int datalen)
 {
-	char usb_hdr[HEADERSIZE] = { 0xa5, 0x5a, 0x18, 0x04, 0xff, 0xff,
-	                             0xff, 0xff, 0x48, 0x00, 0x00, 0x00
-	                           };
-#if 0
-	char buffer[1] = { 0x0 };
-#endif
+	char header[HEADERSIZE]   = { 0xa5, 0x5a, 0x18, 0x04,
+	                              0xff, 0xff, 0xff, 0xff,
+	                              0x48, 0x00, 0x00, 0x00 };
+	char trailer[TRAILERSIZE] = { 0xff, 0x00 };
+
 	int usb_timeout = 1000;
 	int usb_endpoint = 0x2;
 	int ret;
 
-	*(int *) (usb_hdr + 4) = len;
+	unsigned int rawlen = HEADERSIZE + datalen + TRAILERSIZE;
+	unsigned int padlen = (PADSIZE - (rawlen % PADSIZE)) % PADSIZE;
+	unsigned int buflen = rawlen+padlen;
 
-	debug("bytes_to_send: %d, offset: %d", len, HEADERSIZE);
+	debug("calculated full bytes_to_send:: %x (padded to %x)", rawlen, buflen);
 
-#if 0
-	/* Send USB header */
-	if ((ret = usb_bulk_write(myDevHandle, usb_endpoint, usb_hdr, 12, usb_timeout)) < 0)
-	{
-		error("%s: Error occurred while writing data to device.", Name);
-		error("%s: usb_bulk_write returned: %d", Name, ret);
-		return -1;
-	}
-
-	/* Send JPEG image */
-	if ((ret = usb_bulk_write(myDevHandle, usb_endpoint, data, len, usb_timeout)) < 0)
-	{
-		error("%s: Error occurred while writing data to device.", Name);
-		error("%s: usb_bulk_write returned: %d", Name, ret);
-		return -1;
-	}
-
-	/* Finish transmission by sending zero */
-	if ((ret = usb_bulk_write(myDevHandle, usb_endpoint, buffer, 1, usb_timeout)) < 0)
-	{
-		error("%s: Error occurred while writing data to device.", Name);
-		error("%s: usb_bulk_write returned: %d", Name, ret);
-		return -1;
-	}
-#endif
+	// real size into header
+	memcpy(header + 4, &rawlen, 4);
 
 	char *buffer;
-	unsigned int rest = FILLSIZE - ((len + HEADERSIZE) % FILLSIZE); /* +1; */
-	unsigned int full = HEADERSIZE + len + rest;
-
-	debug("calculated full bytes_to_send:: %d", full);
-
-	buffer = malloc(full + FILLSIZE); //added FILLSIZE is just for safety
+	buffer = malloc(buflen);
 	if (buffer != NULL)
 	{
-		int i;
-		for (i = 0; i < HEADERSIZE; i++)
-			buffer[i] = usb_hdr[i];
-		memset(buffer + HEADERSIZE + len, 0x00, rest);
-		memcpy(buffer + HEADERSIZE, data, len);
-		if ((ret = usb_bulk_write(myDevHandle, usb_endpoint, buffer, full, usb_timeout)) < 0)
+		memcpy(buffer                                     , header , HEADERSIZE);
+		memcpy(buffer + HEADERSIZE                        , data   , datalen);
+		memcpy(buffer + HEADERSIZE + datalen              , trailer, TRAILERSIZE);
+		memset(buffer + HEADERSIZE + datalen + TRAILERSIZE, 0x00   , padlen);
+		if ((ret = usb_bulk_write(myDevHandle, usb_endpoint, buffer, buflen, usb_timeout)) < 0)
 		{
 			error("%s: Error occurred while writing data to device.", Name);
 			error("%s: usb_bulk_write returned: %d", Name, ret);
@@ -481,7 +454,7 @@ static int drv_SamsungSPF_send(char *data, unsigned int len)
 	/* Keep SPF87h and friends in MiniMonitorMode */
 	char bytes[]= {0x09,0x04};
 
-	if ((ret = usb_control_msg(myDevHandle, 0xc0, 0x01, 0x0000, 0x0000, bytes, 0x02, 1000)) < 0)
+	if ((ret = usb_control_msg(myDevHandle, 0xc0, 0x01, 0x0000, 0x0000, bytes, 0x02, usb_timeout)) < 0)
 	{
 		error("%s: Error occurred while sending control_msg to device.", Name);
 		error("%s: usb_control_msg returned: %d", Name, ret);
