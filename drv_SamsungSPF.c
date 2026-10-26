@@ -39,7 +39,9 @@
 #include "config.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <usb.h>
 #include <jpeglib.h>
@@ -206,9 +208,9 @@ static struct SPFdev spfDevices[] =
 
 static int numFrames = sizeof(spfDevices) / sizeof(spfDevices[0]);
 
-struct usb_device *myDev;
-usb_dev_handle *myDevHandle;
-struct SPFdev *myFrame;
+static struct usb_device *myDev;
+static usb_dev_handle *myDevHandle;
+static struct SPFdev *myFrame;
 
 typedef struct
 {
@@ -235,7 +237,7 @@ static struct
 
 
 /* please note that in-memory compression doesn't work satisfactory */
-int convert2JPG()
+static int convert2JPG()
 {
 	struct jpeg_compress_struct cinfo;
 	struct jpeg_error_mgr jerr;
@@ -343,7 +345,6 @@ static void drv_SamsungSPF_find()
 		}
 	}
 
-	free(bus);
 	myDev = 0;
 }
 
@@ -357,6 +358,7 @@ static int drv_SamsungSPF_open()
 	}
 
 	int res = -1;
+	int i;
 	char buf[256];
 
 	if (myDev->descriptor.idProduct == myFrame->productID.storageMode)
@@ -364,27 +366,40 @@ static int drv_SamsungSPF_open()
 		info("%s: Opening device and switching to monitor mode", Name);
 
 		myDevHandle = usb_open(myDev);
-
-#if 0
-		setuid(getuid());
-#endif
+		if (!myDevHandle)
+		{
+			error("%s: Could not open device in storage mode!", Name);
+			return -1;
+		}
 
 		strcpy(buf, "** no string **");
 		res = usb_get_string_simple(myDevHandle, myDev->descriptor.iManufacturer, buf, sizeof(buf));
 		debug("usb_get_string_simple => %d, %s", res, buf);
 
-		memset(buf, 0, 256);
+		memset(buf, 0, sizeof(buf));
 
 		res = usb_control_msg(myDevHandle, USB_TYPE_STANDARD | USB_ENDPOINT_IN,
 		                      USB_REQ_GET_DESCRIPTOR, 0xfe, 0xfe, buf, 0xfe, 1000);
-		/* usb_close( myDev ); */
 		usb_close(myDevHandle);
-		// Sleep some time before research
-		sleep(1);
-		drv_SamsungSPF_find();
+		myDevHandle = NULL;
+
+		/* the frame re-enumerates after switching, give it some time */
+		for (i = 0; i < 10; i++)
+		{
+			sleep(1);
+			drv_SamsungSPF_find();
+			if (myDev && myDev->descriptor.idProduct == myFrame->productID.monitorMode)
+				break;
+		}
 	}
 	else
 		info("%s: No device in storage mode found", Name);
+
+	if (!myDev)
+	{
+		error("%s: Device disappeared while switching to monitor mode!", Name);
+		return -1;
+	}
 
 	if (myDev->descriptor.idProduct == myFrame->productID.storageMode)
 	{
@@ -396,6 +411,11 @@ static int drv_SamsungSPF_open()
 	{
 		info("%s: Device '%s' is now in monitor mode.", Name, myFrame->type);
 		myDevHandle = usb_open(myDev);
+		if (!myDevHandle)
+		{
+			error("%s: Could not open device in monitor mode!", Name);
+			return -1;
+		}
 		return 0;
 	}
 
@@ -543,6 +563,7 @@ static int drv_SamsungSPF_start(const char *section)
 	if (XRES < 6 || YRES < 8)
 	{
 		error("%s: bad Font '%s' from %s (must be at least 6x8)", Name, s, cfg_source());
+		free(s);
 		return -1;
 	}
 	free(s);
@@ -550,6 +571,11 @@ static int drv_SamsungSPF_start(const char *section)
 	/* Allocate framebuffer */
 	image.fbsize = myFrame->xRes * myFrame->yRes * sizeof(RGB);
 	image.buf = malloc(image.fbsize);
+	if (image.buf == NULL)
+	{
+		error("%s: Not enough free memory for framebuffer.", Name);
+		return -1;
+	}
 	memset(image.buf, 128, image.fbsize);
 	image.dirty = 0;
 
@@ -602,16 +628,12 @@ int drv_SamsungSPF_init(const char *section, const int quiet)
 
 	// Look for model entry in config
 	s = cfg_get(section, "Model", NULL);
-	if (s == NULL || *s != '\0')
+	if (s == NULL || *s == '\0')
 	{
-		s = cfg_get(section, "Model", NULL);
-		if (s == NULL || *s == '\0')
-		{
-
-			drv_SamsungSPF_list();
-			error("%s: no '%s.Model' entry from %s", Name, section, cfg_source());
-			return -1;
-		}
+		drv_SamsungSPF_list();
+		error("%s: no '%s.Model' entry from %s", Name, section, cfg_source());
+		free(s);
+		return -1;
 	}
 	// Look for specified device
 	for (i = 0; i < numFrames; i++)
@@ -628,6 +650,7 @@ int drv_SamsungSPF_init(const char *section, const int quiet)
 	{
 		drv_SamsungSPF_list();
 		error("%s: unknown model '%s'!", Name, s);
+		free(s);
 		return -1;
 	}
 
@@ -694,18 +717,53 @@ int drv_SamsungSPF_quit(const int quiet)
 	drv_generic_graphic_clear();
 
 	/* say goodbye... */
-	if (!quiet)
+	/* read goodbye message from /tmp/lcd/goodbye (same as DPF driver) */
+	char line1[80];
+	FILE *fp;
+
+	fp = fopen("/tmp/lcd/goodbye", "r");
+	if (!fp)
 	{
-		drv_generic_graphic_greet("goodbye!", NULL);
+		debug("couldn't open file '/tmp/lcd/goodbye'");
+		if (!quiet)
+		{
+			drv_generic_graphic_greet("goodbye!", NULL);
+		}
 	}
+	else
+	{
+		if (fgets(line1, sizeof(line1), fp) != NULL)
+		{
+			line1[strcspn(line1, "\r\n")] = '\0';
+		}
+		else
+		{
+			debug("'/tmp/lcd/goodbye' seems empty");
+			line1[0] = '\0';
+		}
+		fclose(fp);
+
+		/* remove the file */
+		debug("removing '/tmp/lcd/goodbye'");
+		unlink("/tmp/lcd/goodbye");
+
+		drv_generic_graphic_greet(NULL, line1);
+	}
+
+	/* the timer won't run anymore, so flush the last image now */
+	drv_SamsungSPF_timer(NULL);
 
 	drv_generic_graphic_quit();
 
 	debug("closing connection");
 	printf("%s: Closing driver...\n", Name);
-	usb_close(myDevHandle);
-	free(myDev);
-	free(myDevHandle);
+	if (myDevHandle)
+		usb_close(myDevHandle);	/* frees myDevHandle */
+	myDevHandle = NULL;
+	myDev = NULL;	/* owned by libusb, must not be freed */
+
+	free(image.buf);
+	image.buf = NULL;
 
 	return (0);
 }

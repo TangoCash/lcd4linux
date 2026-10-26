@@ -418,35 +418,25 @@ int drv_dpf_quit(const int quiet)
     drv_generic_graphic_clear();
 
     /* say goodbye... */
-	//read goodby message from /tmp/lcd/goodbye
-	char line1[80], value[80];
+	//read goodbye message from /tmp/lcd/goodbye
+	char line1[80];
 	FILE *fp;
-	int i, size;
 
 	fp = fopen("/tmp/lcd/goodbye", "r");
 	if (!fp) {
 		debug("couldn't open file '/tmp/lcd/goodbye'");
-		line1[0] = '\0';
 		if (!quiet) {
 			drv_generic_graphic_greet("goodbye!", NULL);
 		}
 	} else {
-		i = 0;
-		while (!feof(fp) && i++ < 1) {
-			fgets(value, sizeof(value), fp);
-			size = strcspn(value, "\r\n");
-			strncpy(line1, value, size);
-			line1[size] = '\0';
-			/* more than 80 chars, chew up rest of line */
-			while (!feof(fp) && strchr(value, '\n') == NULL) {
-				fgets(value, sizeof(value), fp);
-			}
-		}
-		fclose(fp);
-		if (i <= 1) {
+		if (fgets(line1, sizeof(line1), fp) != NULL) {
+			line1[strcspn(line1, "\r\n")] = '\0';
+		} else {
 			debug("'/tmp/lcd/goodbye' seems empty");
 			line1[0] = '\0';
 		}
+		fclose(fp);
+
 		/* remove the file */
 		debug("removing '/tmp/lcd/goodbye'");
 		unlink("/tmp/lcd/goodbye");

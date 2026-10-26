@@ -1,3 +1,13 @@
+#ifndef _JPEG_MEM_DEST_H_
+#define _JPEG_MEM_DEST_H_
+
+/*
+ * Fallback for old libjpeg versions only. libjpeg >= 8 and
+ * libjpeg-turbo with MEM_SRCDST_SUPPORTED provide jpeg_mem_dest()
+ * themselves (same condition as in jpeglib.h).
+ */
+#if !(JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED))
+
 #define ERREXIT(cinfo,code)  \
   ((cinfo)->err->msg_code = (code), \
    (*(cinfo)->err->error_exit) ((j_common_ptr) (cinfo)))
@@ -110,3 +120,6 @@ jpeg_mem_dest (j_compress_ptr cinfo,
   dest->pub.free_in_buffer = dest->bufsize = *outsize;
 }
 
+#endif /* !(JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED)) */
+
+#endif /* _JPEG_MEM_DEST_H_ */
