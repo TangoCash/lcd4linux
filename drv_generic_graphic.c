@@ -385,36 +385,75 @@ int drv_generic_graphic_greet(const char *msg1, const char *msg2)
 }
 
 
-/* render a single line centered on the display (horizontally and vertically),
- * using the built-in 6x8 font scaled by an integer factor. If the text is too
- * wide for the requested scale, the scale is reduced until it fits.
- * XRES/YRES are restored afterwards, so the layout font is not affected. */
-int drv_generic_graphic_center(const char *msg, int scale)
+/* same as drv_generic_graphic_greet(), but all lines are rendered as one block
+ * centered vertically on the display, and the 6x8 font is scaled by an integer
+ * factor. If a line is too wide for the requested scale, the scale is reduced
+ * until all lines fit. XRES/YRES are restored afterwards, so the layout font is
+ * not affected. */
+int drv_generic_graphic_greet_center(const char *msg1, const char *msg2, int scale)
 {
+	char *line1[] = { NULL };
+	char *line2[] = { NULL };
+
+	const char *text[4];
 	int xres = XRES, yres = YRES;
-	int len, w, h;
+	int i, n, maxlen, row;
+	int flag = 0;
 
-	if (msg == NULL || *msg == '\0')
-		return 0;
+	unsigned int cols, rows;
 
-	len = strlen(msg);
 	if (scale < 1)
 		scale = 1;
-	while (scale > 1 && 6 * scale * len > DCOLS)
-		scale--;
 
-	w = 6 * scale;
-	h = 8 * scale;
-	if (w * len > DCOLS || h > DROWS)
+	/* collect the lines exactly as drv_generic_graphic_greet() does */
+	n = 0;
+	if (line1[0])
+		text[n++] = line1[0];
+	if (line2[0])
+		text[n++] = line2[0];
+	if (msg1)
+		text[n++] = msg1;
+	if (msg2)
+		text[n++] = msg2;
+	if (n == 0)
 		return 0;
 
-	XRES = w;
-	YRES = h;
-	drv_generic_graphic_render(0, (DROWS - h) / 2, (DCOLS - w * len) / 2, FG_COL, BG_COL, "norm", msg);
+	maxlen = 0;
+	for (i = 0; i < n; i++)
+		if ((int) strlen(text[i]) > maxlen)
+			maxlen = strlen(text[i]);
+
+	/* reduce scale until all lines fit */
+	while (scale > 1 && (6 * scale * maxlen > DCOLS || 8 * scale * n > DROWS))
+		scale--;
+
+	XRES = 6 * scale;
+	YRES = 8 * scale;
+
+	cols = DCOLS / XRES;
+	rows = DROWS / YRES;
+
+	/* first row of the vertically centered block */
+	row = (DROWS - YRES * n) / 2;
+
+	if ((unsigned int) n <= rows)
+	{
+		for (i = 0; i < n; i++)
+		{
+			unsigned int len = strlen(text[i]);
+			if (len <= cols)
+			{
+				drv_generic_graphic_render(0, row + YRES * i, (DCOLS - XRES * len) / 2, FG_COL, BG_COL, "norm",
+				                           text[i]);
+				flag = 1;
+			}
+		}
+	}
+
 	XRES = xres;
 	YRES = yres;
 
-	return 1;
+	return flag;
 }
 
 

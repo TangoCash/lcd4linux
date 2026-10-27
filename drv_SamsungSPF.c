@@ -733,7 +733,7 @@ int drv_SamsungSPF_quit(const int quiet)
 		debug("couldn't open file '/tmp/lcd/goodbye'");
 		if (!quiet)
 		{
-			drv_generic_graphic_center("goodbye!", goodbyeScale);
+			drv_generic_graphic_greet_center("goodbye!", NULL, goodbyeScale);
 		}
 	}
 	else
@@ -753,7 +753,7 @@ int drv_SamsungSPF_quit(const int quiet)
 		debug("removing '/tmp/lcd/goodbye'");
 		unlink("/tmp/lcd/goodbye");
 
-		drv_generic_graphic_center(line1, goodbyeScale);
+		drv_generic_graphic_greet_center(NULL, line1, goodbyeScale);
 	}
 
 	/* the timer won't run anymore, so flush the last image now */

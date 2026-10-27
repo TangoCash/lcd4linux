@@ -53,7 +53,7 @@ extern unsigned char drv_generic_graphic_black(const int row, const int col);
 int drv_generic_graphic_init(const char *section, const char *driver);
 int drv_generic_graphic_clear(void);
 int drv_generic_graphic_greet(const char *msg1, const char *msg2);
-int drv_generic_graphic_center(const char *msg, int scale);
+int drv_generic_graphic_greet_center(const char *msg1, const char *msg2, int scale);
 int drv_generic_graphic_draw(WIDGET * W);
 int drv_generic_graphic_icon_draw(WIDGET * W);
 int drv_generic_graphic_bar_draw(WIDGET * W);
