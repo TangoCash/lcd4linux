@@ -212,6 +212,9 @@ static struct usb_device *myDev;
 static usb_dev_handle *myDevHandle;
 static struct SPFdev *myFrame;
 
+/* scale factor of the 6x8 font for the goodbye message (1 = 6x8, 4 = 24x32, ...) */
+static int goodbyeScale = 4;
+
 typedef struct
 {
 	unsigned char R, G, B;
@@ -541,6 +544,9 @@ static int drv_SamsungSPF_start(const char *section)
 	cfg_number(section, "update", timerInterval, 0, -1, &timerInterval);
 	debug("Updating display every %dms", timerInterval);
 
+	cfg_number(section, "GoodbyeScale", goodbyeScale, 1, 20, &goodbyeScale);
+	debug("Goodbye font %dx%d", 6 * goodbyeScale, 8 * goodbyeScale);
+
 	DROWS = myFrame->yRes;
 	DCOLS = myFrame->xRes;
 	info("%s: Using SPF with %dx%d pixels.", Name, DCOLS, DROWS);
@@ -727,7 +733,7 @@ int drv_SamsungSPF_quit(const int quiet)
 		debug("couldn't open file '/tmp/lcd/goodbye'");
 		if (!quiet)
 		{
-			drv_generic_graphic_greet("goodbye!", NULL);
+			drv_generic_graphic_center("goodbye!", goodbyeScale);
 		}
 	}
 	else
@@ -747,7 +753,7 @@ int drv_SamsungSPF_quit(const int quiet)
 		debug("removing '/tmp/lcd/goodbye'");
 		unlink("/tmp/lcd/goodbye");
 
-		drv_generic_graphic_greet(NULL, line1);
+		drv_generic_graphic_center(line1, goodbyeScale);
 	}
 
 	/* the timer won't run anymore, so flush the last image now */

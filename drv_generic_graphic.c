@@ -385,6 +385,39 @@ int drv_generic_graphic_greet(const char *msg1, const char *msg2)
 }
 
 
+/* render a single line centered on the display (horizontally and vertically),
+ * using the built-in 6x8 font scaled by an integer factor. If the text is too
+ * wide for the requested scale, the scale is reduced until it fits.
+ * XRES/YRES are restored afterwards, so the layout font is not affected. */
+int drv_generic_graphic_center(const char *msg, int scale)
+{
+	int xres = XRES, yres = YRES;
+	int len, w, h;
+
+	if (msg == NULL || *msg == '\0')
+		return 0;
+
+	len = strlen(msg);
+	if (scale < 1)
+		scale = 1;
+	while (scale > 1 && 6 * scale * len > DCOLS)
+		scale--;
+
+	w = 6 * scale;
+	h = 8 * scale;
+	if (w * len > DCOLS || h > DROWS)
+		return 0;
+
+	XRES = w;
+	YRES = h;
+	drv_generic_graphic_render(0, (DROWS - h) / 2, (DCOLS - w * len) / 2, FG_COL, BG_COL, "norm", msg);
+	XRES = xres;
+	YRES = yres;
+
+	return 1;
+}
+
+
 int drv_generic_graphic_draw(WIDGET * W)
 {
 	WIDGET_TEXT *Text = W->data;
