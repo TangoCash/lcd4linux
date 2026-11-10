@@ -50,6 +50,7 @@
 #include "cfg.h"
 #include "qprintf.h"
 #include "timer.h"
+#include "property.h"
 #include "drv.h"
 
 /* graphic display? */
@@ -215,6 +216,16 @@ static struct SPFdev *myFrame;
 /* scale factor of the 6x8 font for the goodbye message (1 = 6x8, 4 = 24x32, ...) */
 static int goodbyeScale = 4;
 
+/* software brightness: 0 = black ... BACKLIGHT_MAX = not dimmed
+ * (same scale as neutrino's /tmp/lcd/brightness)
+ * The frames have no backlight control in mini monitor mode, so the image
+ * itself is darkened right before it is compressed. */
+#define BACKLIGHT_MAX 10
+
+static PROPERTY backlightProp;
+static int backlight = BACKLIGHT_MAX;
+static unsigned char dimLut[256];
+
 typedef struct
 {
 	unsigned char R, G, B;
@@ -246,6 +257,15 @@ static int convert2JPG()
 	struct jpeg_error_mgr jerr;
 	int row_stride;		/* physical row width in buffer */
 	JSAMPROW row_pointer[1];	/* pointer to a single row */
+	unsigned char *dimRow = NULL;	/* dimmed copy of a single row */
+	unsigned int i;
+
+	if (backlight < BACKLIGHT_MAX)
+	{
+		dimRow = malloc(myFrame->xRes * sizeof(RGB));
+		if (dimRow == NULL)
+			error("%s: Not enough free memory, image is not dimmed.", Name);
+	}
 
 	/* Initialize compression frame */
 	cinfo.err = jpeg_std_error(&jerr);
@@ -268,6 +288,13 @@ static int convert2JPG()
 	while (cinfo.next_scanline < cinfo.image_height)
 	{
 		row_pointer[0] = (JSAMPROW) (image.buf + (cinfo.next_scanline * row_stride));
+		if (dimRow)
+		{
+			/* image.buf stays untouched, so the level can change at any time */
+			for (i = 0; i < row_stride * sizeof(RGB); i++)
+				dimRow[i] = dimLut[row_pointer[0][i]];
+			row_pointer[0] = (JSAMPROW) dimRow;
+		}
 		jpeg_write_scanlines(&cinfo, row_pointer, 1);
 	}
 
@@ -275,7 +302,53 @@ static int convert2JPG()
 	jpeg_finish_compress(&cinfo);
 	jpeg_destroy_compress(&cinfo);
 
+	free(dimRow);
+
 	return 0;
+}
+
+
+/* set brightness (0 = black ... BACKLIGHT_MAX = not dimmed) */
+static void drv_SamsungSPF_backlight(int level)
+{
+	int i;
+
+	if (level < 0)
+		level = 0;
+	if (level > BACKLIGHT_MAX)
+		level = BACKLIGHT_MAX;
+
+	if (level == backlight)
+		return;
+
+	info("%s: backlight %d -> %d", Name, backlight, level);
+	backlight = level;
+
+	for (i = 0; i < 256; i++)
+		dimLut[i] = (i * backlight + BACKLIGHT_MAX / 2) / BACKLIGHT_MAX;
+
+	/* force retransmission of the unchanged framebuffer */
+	image.dirty = 1;
+}
+
+
+/* evaluate the 'Backlight' expression and apply its value */
+static void drv_SamsungSPF_backlight_eval(void)
+{
+	char *s;
+
+	if (!property_valid(&backlightProp))
+		return;
+
+	property_eval(&backlightProp);
+
+	/* an empty result (e.g. file::readline() of a missing file) must not
+	   turn the display black */
+	s = P2S(&backlightProp);
+	if (s == NULL || *s == '\0')
+		drv_SamsungSPF_backlight(BACKLIGHT_MAX);
+	else
+		drv_SamsungSPF_backlight((int) P2N(&backlightProp));
 }
 
 
@@ -510,8 +583,8 @@ static void drv_SamsungSPF_blit(const int row, const int col, const int height, 
 }
 
 
-static void drv_SamsungSPF_timer( __attribute__ ((unused))
-                                  void *notused)
+/* compress and transmit the image if something has changed */
+static void drv_SamsungSPF_flush(void)
 {
 	if (image.dirty)
 	{
@@ -532,6 +605,17 @@ static void drv_SamsungSPF_timer( __attribute__ ((unused))
 			free(jpegImage.buf);
 		jpegImage.size = 0;
 	}
+}
+
+
+static void drv_SamsungSPF_timer( __attribute__ ((unused))
+                                  void *notused)
+{
+	/* the backlight value is an expression; re-evaluate it with every
+	   update, so a change takes effect without restarting lcd4linux */
+	drv_SamsungSPF_backlight_eval();
+
+	drv_SamsungSPF_flush();
 }
 
 
@@ -583,6 +667,7 @@ static int drv_SamsungSPF_start(const char *section)
 		return -1;
 	}
 	memset(image.buf, 128, image.fbsize);
+
 	image.dirty = 0;
 
 	/* JPEG buffer is allocated by jpeglib */
@@ -697,6 +782,14 @@ int drv_SamsungSPF_init(const char *section, const int quiet)
 	if ((ret = drv_generic_graphic_init(section, Name)) != 0)
 		return ret;
 
+	/* backlight value (0 = black ... 10 = not dimmed), may be an expression */
+	/* must not be loaded any earlier: a compiled expression points into the
+	   evaluator's function table, which is reallocated and resorted by the
+	   AddFunction() calls of drv_generic_graphic_init() */
+	property_load(section, "Backlight", "10", &backlightProp);
+	drv_SamsungSPF_backlight_eval();
+	image.dirty = 0;
+
 	if (!quiet)
 	{
 		char buffer[40];
@@ -757,7 +850,9 @@ int drv_SamsungSPF_quit(const int quiet)
 	}
 
 	/* the timer won't run anymore, so flush the last image now */
-	drv_SamsungSPF_timer(NULL);
+	/* the goodbye message is shown undimmed, as it was with a dimming overlay */
+	drv_SamsungSPF_backlight(BACKLIGHT_MAX);
+	drv_SamsungSPF_flush();
 
 	drv_generic_graphic_quit();
 
@@ -770,6 +865,8 @@ int drv_SamsungSPF_quit(const int quiet)
 
 	free(image.buf);
 	image.buf = NULL;
+
+	property_free(&backlightProp);
 
 	return (0);
 }
