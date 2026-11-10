@@ -111,7 +111,8 @@ static void my_exists(RESULT * result, RESULT * arg1)
 
     ifreq = (struct ifreq *) buf;
     len = sizeof(struct ifreq);
-    strncpy(devname, R2S(arg1), sizeof(devname));
+    strncpy(devname, R2S(arg1), sizeof(devname) - 1);
+    devname[sizeof(devname) - 1] = '\0';
 
     while (ifreq && *((char *) ifreq) && ((char *) ifreq) < buf + ifcnf.ifc_len) {
 	if (*((char *) ifreq) && strncmp(ifreq->ifr_name, devname, sizeof(devname)) == 0) {
