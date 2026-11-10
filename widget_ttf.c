@@ -94,7 +94,7 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 	char *text;
 	char *dborder;
 	double size;
-	char *font,*err,*align;
+	char *font,*align;
 	char *mheight;
 	char *mtext;
 
@@ -151,8 +151,8 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 			do
 			{
 				size--;
-				err = gdImageStringFT(NULL,&mrect[0],0,font,size,0.,0,0,mtext);
-				err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
+				gdImageStringFT(NULL,&mrect[0],0,font,size,0.,0,0,mtext);
+				gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
 			}
 			while ((brect[2]-brect[6] > _width) || (mrect[3]-mrect[7] > _height));
 			x = _width;
@@ -160,8 +160,8 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 		}
 		else
 		{
-			err = gdImageStringFT(NULL,&mrect[0],0,font,size,0.,0,0,mtext);
-			err = gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
+			gdImageStringFT(NULL,&mrect[0],0,font,size,0.,0,0,mtext);
+			gdImageStringFT(NULL,&brect[0],0,font,size,0.,0,0,text);
 
 			if ((_width > 0) && (_height > 0))
 			{
@@ -255,7 +255,7 @@ static void widget_ttf_render(const char *Name, WIDGET_TTF * Image)
 		if (debugborder)
 			gdImageRectangle(Image->gdImage, 0, 0, _width-1, _height-1, debugborder);
 
-		err = gdImageStringFT(Image->gdImage,&brect[0],color,font,size,0.0,x,y,text);
+		gdImageStringFT(Image->gdImage,&brect[0],color,font,size,0.0,x,y,text);
 
 	}
 
