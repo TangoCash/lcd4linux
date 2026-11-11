@@ -216,17 +216,68 @@ static struct SPFdev *myFrame;
 /* scale factor of the 6x8 font for the goodbye message (1 = 6x8, 4 = 24x32, ...) */
 static int goodbyeScale = 4;
 
-/* brightness: 0 = darkest ... BACKLIGHT_MAX = brightest
- * (same scale as neutrino's /tmp/lcd/brightness)
+/*
+ * Brightness of the frame's backlight
+ * -----------------------------------
  *
- * The frames take the brightness of their backlight with the header of an
- * image: Samsung's Frame Manager puts the value (0..100) into byte 8 of the
- * header and marks the first image after a change with type 0x05 instead of
- * 0x04. That is the default here ('Dimming' 'hardware').
+ * In mini monitor mode every image goes to the frame as one bulk transfer:
+ * a header of 12 bytes, the JPEG, a trailer, padded with zeros.
  *
- * With 'Dimming' 'software' the backlight is left alone and the image itself
- * is darkened right before it is compressed, for frames that do not take
- * the value. */
+ *   byte 0..1   0xa5 0x5a   magic
+ *   byte 2      0x18        (left as it always was in this driver)
+ *   byte 3      type        0x04 = image
+ *                           0x05 = image that carries a new brightness
+ *   byte 4..7   length      header + JPEG + trailer, little endian
+ *   byte 8      brightness  0..100
+ *   byte 9..11  0
+ *
+ * There is no command of its own for the brightness and no public
+ * documentation. This was read from Samsung's Frame Manager for Windows
+ * (sam_controller.exe of version 2.00, the one for SPF-87H and SPF-107H):
+ * it keeps the value of its tray slider (100 - position of the slider) in
+ * byte 8 of every header and sends the first image after a change of the
+ * slider with type 0x05 instead of 0x04. This driver used to send a fixed
+ * 0x48 (72) in byte 8, always with type 0x04.
+ *
+ * Confirmed on a frame:
+ * - the frame takes the value; its own settings menu shows it as
+ *   'Brightness' afterwards, so it is the same setting as in that menu
+ * - 0 is the lowest step of the backlight, not off: the picture is dimmed
+ *   all the way down but still visible
+ *
+ * What this driver does with it:
+ * - 'Backlight' in the display section is 0 (darkest) .. BACKLIGHT_MAX
+ *   (brightest), the scale of neutrino's /tmp/lcd/brightness, and is sent
+ *   as level * 10:
+ *
+ *     Display SPF {
+ *         Driver    'SamsungSPF'
+ *         Model     'SPF-Auto'
+ *         Backlight 7
+ *     }
+ *
+ *   The entry is an expression that is evaluated with every update of the
+ *   display. So instead of a fixed level it can follow a file while
+ *   lcd4linux runs, as neutrino's images do it:
+ *
+ *         Backlight file::readline('/tmp/lcd/brightness', 1)
+ *
+ *   Without the entry, or if the expression yields an empty string (the file
+ *   is missing), the level is BACKLIGHT_MAX.
+ * - A new level marks the next image with type 0x05, and so does the start,
+ *   because the frame comes up with the brightness of its own menu. If the
+ *   picture has not changed, it is sent again for that.
+ * - An image of type 0x05 is followed by the same image with type 0x04.
+ *   That is a precaution for frames that might take the brightness from
+ *   such an image but not show it; the Frame Manager needs nothing like it,
+ *   since it sends images all the time.
+ *
+ * 'Dimming' 'software' is for frames that do not take the value: the
+ * header stays as it was (type 0x04, 0x48 in byte 8) and the image itself
+ * is darkened by a lookup table right before it is compressed. There level
+ * 0 is black, and the goodbye message is sent undimmed to stay readable.
+ * The default is 'hardware'.
+ */
 #define BACKLIGHT_MAX 10
 
 #define HEADER_TYPE 3		/* header byte: type of the frame */
