@@ -216,12 +216,26 @@ static struct SPFdev *myFrame;
 /* scale factor of the 6x8 font for the goodbye message (1 = 6x8, 4 = 24x32, ...) */
 static int goodbyeScale = 4;
 
-/* software brightness: 0 = black ... BACKLIGHT_MAX = not dimmed
+/* brightness: 0 = darkest ... BACKLIGHT_MAX = brightest
  * (same scale as neutrino's /tmp/lcd/brightness)
- * The frames have no backlight control in mini monitor mode, so the image
- * itself is darkened right before it is compressed. */
+ *
+ * The frames take the brightness of their backlight with the header of an
+ * image: Samsung's Frame Manager puts the value (0..100) into byte 8 of the
+ * header and marks the first image after a change with type 0x05 instead of
+ * 0x04. That is the default here ('Dimming' 'hardware').
+ *
+ * With 'Dimming' 'software' the backlight is left alone and the image itself
+ * is darkened right before it is compressed, for frames that do not take
+ * the value. */
 #define BACKLIGHT_MAX 10
 
+#define HEADER_TYPE 3		/* header byte: type of the frame */
+#define HEADER_BRIGHTNESS 8	/* header byte: brightness 0..100 */
+#define TYPE_IMAGE 0x04
+#define TYPE_IMAGE_BRIGHTNESS 0x05
+
+static int softDim = 0;		/* darken the image instead of the backlight */
+static int backlightSend = 0;	/* mark the next image as carrying a new brightness */
 static PROPERTY backlightProp;
 static int backlight = BACKLIGHT_MAX;
 static unsigned char dimLut[256];
@@ -260,7 +274,7 @@ static int convert2JPG()
 	unsigned char *dimRow = NULL;	/* dimmed copy of a single row */
 	unsigned int i;
 
-	if (backlight < BACKLIGHT_MAX)
+	if (softDim && backlight < BACKLIGHT_MAX)
 	{
 		dimRow = malloc(myFrame->xRes * sizeof(RGB));
 		if (dimRow == NULL)
@@ -326,6 +340,9 @@ static void drv_SamsungSPF_backlight(int level)
 
 	for (i = 0; i < 256; i++)
 		dimLut[i] = (i * backlight + BACKLIGHT_MAX / 2) / BACKLIGHT_MAX;
+
+	if (!softDim)
+		backlightSend = 1;
 
 	/* force retransmission of the unchanged framebuffer */
 	image.dirty = 1;
@@ -503,9 +520,22 @@ static int drv_SamsungSPF_open()
 /* dummy function that sends something to the display */
 static int drv_SamsungSPF_send(char *data, unsigned int datalen)
 {
-	char header[HEADERSIZE]   = { 0xa5, 0x5a, 0x18, 0x04,
+	char header[HEADERSIZE]   = { 0xa5, 0x5a, 0x18, TYPE_IMAGE,
 	                              0xff, 0xff, 0xff, 0xff,
 	                              0x48, 0x00, 0x00, 0x00 };
+	int withBrightness = 0;
+
+	if (!softDim)
+	{
+		/* the brightness goes with every image; the frame is told to
+		   take it by the type of the first image after a change */
+		header[HEADER_BRIGHTNESS] = backlight * 100 / BACKLIGHT_MAX;
+		if (backlightSend)
+		{
+			header[HEADER_TYPE] = TYPE_IMAGE_BRIGHTNESS;
+			withBrightness = 1;
+		}
+	}
 	char trailer[TRAILERSIZE] = { 0xff, 0x00 };
 
 	int usb_timeout = 1000;
@@ -545,6 +575,14 @@ static int drv_SamsungSPF_send(char *data, unsigned int datalen)
 	{
 		error("%s: Not enough free memory.", Name);
 		return -1;
+	}
+
+	if (withBrightness)
+	{
+		/* sent; follow up with the same image as a plain one, in case
+		   a frame does not show an image of this type */
+		backlightSend = 0;
+		image.dirty = 1;
 	}
 
 	/* Keep SPF87h and friends in MiniMonitorMode */
@@ -589,6 +627,8 @@ static void drv_SamsungSPF_flush(void)
 	if (image.dirty)
 	{
 		debug("FB dirty, writing jpeg...");
+		/* Clean dirty bit first: sending may ask for the image once more */
+		image.dirty = 0;
 		convert2JPG();
 
 		/* Sent image to display */
@@ -596,8 +636,6 @@ static void drv_SamsungSPF_flush(void)
 		{
 			error("%s: Error occurred while sending jpeg image to device.", Name);
 		}
-		/* Clean dirty bit */
-		image.dirty = 0;
 
 		/* Free JPEG buffer since a new is allocated each time an image is
 		   compressed */
@@ -786,8 +824,18 @@ int drv_SamsungSPF_init(const char *section, const int quiet)
 	/* must not be loaded any earlier: a compiled expression points into the
 	   evaluator's function table, which is reallocated and resorted by the
 	   AddFunction() calls of drv_generic_graphic_init() */
+	s = cfg_get(section, "Dimming", "hardware");
+	softDim = (s != NULL && strcasecmp(s, "software") == 0);
+	if (s != NULL && !softDim && strcasecmp(s, "hardware") != 0)
+		error("%s: unknown '%s.Dimming' entry '%s' from %s, using 'hardware'", Name, section, s, cfg_source());
+	free(s);
+	info("%s: dimming by %s", Name, softDim ? "darkening the image" : "the backlight of the frame");
+
 	property_load(section, "Backlight", "10", &backlightProp);
 	drv_SamsungSPF_backlight_eval();
+	/* the frame starts with a brightness of its own: set ours with the first image */
+	if (!softDim)
+		backlightSend = 1;
 	image.dirty = 0;
 
 	if (!quiet)
@@ -850,8 +898,11 @@ int drv_SamsungSPF_quit(const int quiet)
 	}
 
 	/* the timer won't run anymore, so flush the last image now */
-	/* the goodbye message is shown undimmed, as it was with a dimming overlay */
-	drv_SamsungSPF_backlight(BACKLIGHT_MAX);
+	/* a darkened image would hide the goodbye message; the backlight stays as it is */
+	if (softDim)
+		drv_SamsungSPF_backlight(BACKLIGHT_MAX);
+	drv_SamsungSPF_flush();
+	/* the plain copy of an image that carried a new brightness */
 	drv_SamsungSPF_flush();
 
 	drv_generic_graphic_quit();
